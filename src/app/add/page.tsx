@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { languages } from "@/src/data/languages";
 
+
 export default function AddBook() {
   const { user, loading } = useAuth();
   const [description, setDescription] = useState("");
@@ -56,6 +57,9 @@ export default function AddBook() {
     setTags(tags.filter((_, i) => i !== index));
   };
 
+  const handleCancel = () => {
+    router.push("/home");
+  };
   const handleBookFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -257,7 +261,12 @@ export default function AddBook() {
             {/* Botões */}
             <div className="flex justify-end gap-4">
               <button className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition">Salvar</button>
-              <button className="border border-gray-400 text-black px-6 py-2 rounded-md hover:bg-gray-100 transition">Cancelar</button>
+              <button
+                onClick={handleCancel}
+                className="border border-gray-400 text-black px-6 py-2 rounded-md hover:bg-gray-100 transition"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
