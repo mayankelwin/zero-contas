@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  updateProfile 
 } from "firebase/auth";
 
 export const login = async (email: string, password: string) => {
@@ -15,9 +16,12 @@ export const login = async (email: string, password: string) => {
   }
 };
 
-export const register = async (email: string, password: string) => {
+export const register = async (email: string, password: string, username: string) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    await updateProfile(userCredential.user, { displayName: username });
+
     return userCredential.user;
   } catch (error) {
     console.error("Erro no registro:", error);

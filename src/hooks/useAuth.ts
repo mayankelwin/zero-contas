@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // <--- import do App Router
 import { login, register, loginWithGoogle } from './../lib/auth';
 
 export type AuthMode = "login" | "register";
@@ -15,6 +16,8 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const router = useRouter(); // hook do App Router
+
   const toggleMode = () => {
     setMode(mode === "login" ? "register" : "login");
     setForm({ username: "", email: "", password: "" });
@@ -30,15 +33,19 @@ export const useAuth = () => {
     setError(null);
 
     try {
+      let user = null;
       if (mode === "login") {
-        const user = await login(form.email, form.password);
+        user = await login(form.email, form.password);
         console.log("Usuário logado:", user);
-        return user;
       } else {
-        const user = await register(form.email, form.password);
+        user = await register(form.email, form.password, form.username);
         console.log("Usuário registrado:", user);
-        return user;
       }
+
+      // Redireciona para home se o login/registro tiver sucesso
+      if (user) router.push('/home');
+
+      return user;
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro");
       console.error(err);
@@ -48,6 +55,7 @@ export const useAuth = () => {
     }
   };
 
+
   const handleGoogleAuth = async () => {
     setLoading(true);
     setError(null);
@@ -55,6 +63,8 @@ export const useAuth = () => {
     try {
       const user = await loginWithGoogle();
       console.log("Usuário logado com Google:", user);
+
+      if (user) router.push('/home');
       return user;
     } catch (err: any) {
       setError(err.message || "Erro no login com Google");
