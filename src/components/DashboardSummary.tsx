@@ -8,7 +8,11 @@ import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react"
 import { toast, ToastContainer } from "react-toastify"
 import 'react-toastify/dist/ReactToastify.css'
 import AddRemoveModal from "./ModalAddandRemove"
-import formatCurrency from "../data/formatCurrency"
+
+const formatCurrencyBR = (value: number | string) => {
+  const numberValue = typeof value === "string" ? parseFloat(value) || 0 : value
+  return numberValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+}
 
 interface Summary {
   total: number
@@ -25,24 +29,21 @@ interface Goal {
 }
 
 export default function DashboardSummary() {
+  const [saldoMetas, setSaldoMetas] = useState(0)
   const [summary, setSummary] = useState<Summary>({
     total: 0,
     income: 0,
     expenses: 0,
     fixedExpenses: 0,
   })
-  const [goals, setGoals] = useState<Goal[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
-  const { user } = useAuth()
   const [favoriteGoal, setFavoriteGoal] = useState<Goal | null>(null)
-  const categories = ["Salário", "Lazer", "Alimentação", "Transporte", "Outro"] // Exemplo de categorias
+  const { user } = useAuth()
 
   // Busca da meta favorita
   useEffect(() => {
     if (!user) return
-
-    // 1️⃣ Consulta metas favoritas
     const favoriteQuery = query(
       collection(db, "goals"),
       where("userId", "==", user.uid),
@@ -60,7 +61,6 @@ export default function DashboardSummary() {
           savedAmount: Number(data.savedAmount ?? 0),
         })
       } else {
-        // 2️⃣ Se não houver favorito, pegar qualquer meta existente
         const allGoalsQuery = query(collection(db, "goals"), where("userId", "==", user.uid))
         const unsubscribeAllGoals = onSnapshot(allGoalsQuery, allSnapshot => {
           if (!allSnapshot.empty) {
@@ -72,11 +72,8 @@ export default function DashboardSummary() {
               goalValue: Number(data.goalValue ?? 0),
               savedAmount: Number(data.savedAmount ?? 0),
             })
-          } else {
-            setFavoriteGoal(null)
-          }
+          } else setFavoriteGoal(null)
         })
-
         return () => unsubscribeAllGoals()
       }
     })
@@ -84,15 +81,12 @@ export default function DashboardSummary() {
     return () => unsubscribeFavorite()
   }, [user])
 
-
   // Resumo financeiro
   useEffect(() => {
     if (!user) return
-
     const transactionsQuery = query(collection(db, "transactions"), where("userId", "==", user.uid))
     const unsubscribeTransactions = onSnapshot(transactionsQuery, snapshot => {
-      let income = 0
-      let expenses = 0
+      let income = 0, expenses = 0
       snapshot.forEach(doc => {
         const data = doc.data()
         if (data.type === "income") income += Number(data.amount ?? 0)
@@ -104,10 +98,7 @@ export default function DashboardSummary() {
     const subscriptionsQuery = query(collection(db, "subscriptions"), where("userId", "==", user.uid))
     const unsubscribeSubscriptions = onSnapshot(subscriptionsQuery, snapshot => {
       let fixedExpenses = 0
-      snapshot.forEach(doc => {
-        const data = doc.data()
-        fixedExpenses += Number(data.value ?? 0)
-      })
+      snapshot.forEach(doc => fixedExpenses += Number(doc.data().value ?? 0))
       setSummary(prev => ({ ...prev, fixedExpenses, total: Math.max(prev.income - prev.expenses - fixedExpenses, 0) }))
     })
 
@@ -117,60 +108,69 @@ export default function DashboardSummary() {
     }
   }, [user])
 
-  const openModal = (goal: Goal) => setSelectedGoal(goal) || setModalOpen(true)
-
-  const handleSubmitModal = async (formData: any & { type: "Add" | "Remove" }) => {
-    if (!selectedGoal || !user) return
-
-    const amount = parseFloat(formData.amount)
-    const addWalletAmount = formData.type === "Add" ? amount : 0
-    const removeAmount = formData.type === "Remove" ? amount : 0
-
-    let totalAvailable = summary.total + addWalletAmount
-    if (removeAmount > totalAvailable) {
-      toast.error("O valor excede o saldo disponível!")
-      return
-    }
-
-    try {
-      // Adiciona saldo à carteira
-      if (addWalletAmount > 0) {
-        await addDoc(collection(db, "transactions"), {
-          userId: user.uid,
-          type: "income",
-          amount: addWalletAmount,
-          title: `Depósito para meta "${selectedGoal.goalName}"`,
-          description: `Você movimentou ${formatCurrency(amount)} para a meta "${selectedGoal.goalName}"`,
-          date: new Date().toISOString(),
-        })
-        setSummary(prev => ({ ...prev, total: prev.total + addWalletAmount }))
-      }
-
-      // Movimenta valor para a meta
-      const goalRef = doc(db, "goals", selectedGoal.id)
-      let newSavedAmount = selectedGoal.savedAmount + addWalletAmount - removeAmount
-      if (newSavedAmount < 0) newSavedAmount = 0
-      await updateDoc(goalRef, { savedAmount: newSavedAmount })
-
-      // Cria transação de movimentação
-      if (addWalletAmount > 0 || removeAmount > 0) {
-        await addDoc(collection(db, "transactions"), {
-          userId: user.uid,
-          type: "expense",
-          amount: removeAmount,
-          title: `Movimentação para meta "${selectedGoal.goalName}"`,
-          description: `Você movimentou R$ ${amount.toFixed(2)} para a meta "${selectedGoal.goalName}"`,
-          date: new Date().toISOString(),
-        })
-      }
-
-      toast.success(`Meta "${selectedGoal.goalName}" atualizada com sucesso!`)
-      setModalOpen(false)
-    } catch (err) {
-      console.error(err)
-      toast.error("Erro ao atualizar a meta.")
-    }
+  const openModal = (goal: Goal) => {
+    setSelectedGoal(goal)
+    setModalOpen(true)
   }
+
+const handleSubmitModal = async (formData: any & { type: "Add" | "Remove"; useSaldo: boolean }) => {
+  if (!selectedGoal || !user) return
+  const amount = parseFloat(formData.amount)
+  const addToGoal = formData.type === "Add" ? amount : 0
+  const removeFromGoal = formData.type === "Remove" ? amount : 0
+
+  if (formData.type === "Add" && formData.useSaldo && amount > summary.total) {
+    toast.error("Saldo insuficiente!")
+    return
+  }
+
+  try {
+    const goalRef = doc(db, "goals", selectedGoal.id)
+    let newSavedAmount = selectedGoal.savedAmount
+    let saldoUsado = 0
+
+    if (formData.type === "Add") {
+      if (formData.useSaldo) {
+        saldoUsado = addToGoal
+        setSummary(prev => ({ ...prev, total: prev.total - saldoUsado }))
+      }
+      newSavedAmount += addToGoal
+      setSaldoMetas(prev => prev + addToGoal)
+      await addDoc(collection(db, "transactions"), {
+        userId: user.uid,
+        type: formData.useSaldo ? "expense" : "goalIncome",
+        amount: addToGoal,
+        title: `Adição à meta "${selectedGoal.goalName}"`,
+        description: `Valor guardado na meta "${selectedGoal.goalName}"`,
+        category: `Meta: ${selectedGoal.goalName}`,
+        date: new Date().toISOString(),
+      })
+    }
+
+    if (formData.type === "Remove") {
+      newSavedAmount -= removeFromGoal
+      if (newSavedAmount < 0) newSavedAmount = 0
+      setSaldoMetas(prev => prev - removeFromGoal)
+      setSummary(prev => ({ ...prev, total: prev.total + removeFromGoal }))
+      await addDoc(collection(db, "transactions"), {
+        userId: user.uid,
+        type: "income",
+        amount: removeFromGoal,
+        title: `Retirada da meta "${selectedGoal.goalName}"`,
+        description: `Valor retirado da meta "${selectedGoal.goalName}"`,
+        category: `Meta: ${selectedGoal.goalName}`,
+        date: new Date().toISOString(),
+      })
+    }
+
+    await updateDoc(goalRef, { savedAmount: newSavedAmount })
+    toast.success(`Meta "${selectedGoal.goalName}" atualizada com sucesso!`)
+    setModalOpen(false)
+  } catch (err) {
+    console.error(err)
+    toast.error("Erro ao atualizar a meta.")
+  }
+}
 
   const cards = [
     { label: "Saldo", value: summary.total, icon: Wallet, color: "text-gray-300", valueColor: "text-white" },
@@ -192,7 +192,7 @@ export default function DashboardSummary() {
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
             <p className={`mt-3 text-3xl font-semibold ${card.valueColor}`}>
-              {formatCurrency(card.value ?? 0)}
+              {formatCurrencyBR(card.value ?? 0)}
             </p>
           </div>
         ))}
@@ -200,29 +200,33 @@ export default function DashboardSummary() {
 
       {/* Meta favorita */}
       {favoriteGoal && (
-        <div className="mt-6 bg-[#1E1F24] p-6 rounded-2xl shadow-md w-full flex flex-col gap-4">
+        <div className="mt-6 bg-[#2A2B30] p-6 rounded-3xl shadow-md w-full flex flex-col gap-4 border border-[#3B3C44]">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold">{favoriteGoal.goalName}</h3>
-            <p className="text-gray-400">
-              {`${formatCurrency(favoriteGoal.savedAmount)} / ${formatCurrency(favoriteGoal.goalValue)}`}
+            <h3 className="text-2xl font-bold text-white">{favoriteGoal.goalName}</h3>
+            <p className="text-gray-300 font-medium">
+              {`${formatCurrencyBR(favoriteGoal.savedAmount)} / ${formatCurrencyBR(favoriteGoal.goalValue)}`}
             </p>
           </div>
-          <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
+
+          <div className="relative h-4 bg-gray-700 rounded-full overflow-hidden mt-2">
             <div
-              className="h-full bg-violet-500 transition-all duration-500"
+              className="h-full bg-purple-700 rounded-full transition-all duration-700 ease-in-out"
               style={{ width: `${Math.min((favoriteGoal.savedAmount / favoriteGoal.goalValue) * 100, 100)}%` }}
             />
+            <span className="absolute right-2 top-0 text-xs font-medium text-gray-200">
+              {`${Math.floor((favoriteGoal.savedAmount / favoriteGoal.goalValue) * 100)}%`}
+            </span>
           </div>
+
           <button
             onClick={() => openModal(favoriteGoal)}
-            className="mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-xl text-white"
+            className="mt-4 px-5 py-2 bg-gray-600 text-gray-100 font-semibold rounded-xl shadow-sm hover:bg-gray-500 transition-all"
           >
             Adicionar / Remover
           </button>
         </div>
       )}
 
-      {/* Modal funcional */}
       {modalOpen && selectedGoal && (
         <AddRemoveModal
           isOpen={modalOpen}

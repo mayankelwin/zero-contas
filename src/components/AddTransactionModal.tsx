@@ -163,20 +163,6 @@ export default function AddTransactionModal({ isOpen, onClose, defaultType }: Ad
         {/* Title */}
         <h2 className="text-3xl font-bold mb-6 text-center">{type === "income" ? "Receita" : type === "expense" ? "Despesa" : type === "subscription" ? "Assinatura" : "Meta"}</h2>
 
-        {/* Dynamic Money Card */}
-        {(type === "income" || type === "expense") && (
-          <div className={`flex items-center justify-between p-4 rounded-xl mb-6 transition-all duration-300 ${type === "income" ? "bg-green-600/20" : "bg-red-600/20"}`}>
-            <div className="flex items-center gap-3">
-              <DollarSign size={28} className={type === "income" ? "text-green-500" : "text-red-500"} />
-              <div>
-                <p className="text-sm opacity-80">Total {type === "income" ? "Receita" : "Despesa"}</p>
-                <p className="text-2xl font-bold">{formattedAmount} R$</p>
-              </div>
-            </div>
-            <div className="text-xs text-gray-300 opacity-80">Atualize o valor no campo abaixo</div>
-          </div>
-        )}
-
         {/* Type Selector Buttons */}
         <div className="flex justify-center gap-3 mb-6 flex-wrap">
           {["income", "expense", "subscription", "goal"].map((t) => (

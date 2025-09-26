@@ -75,16 +75,19 @@ export default function Home() {
         const data = doc.data()
         const amount = Number(data.amount ?? 0)
         switch (data.type) {
-          case "income":
-            income += amount
-            break
-          case "expense":
-            expenses += amount
-            break
-          case "fixedExpense":
-            fixedExpenses += amount
-            break
-        }
+        case "income":
+          income += amount
+          break
+        case "expense":
+          expenses += amount
+          break
+        case "fixedExpense":
+          fixedExpenses += amount
+          break
+        case "goalIncome":
+          break
+      }
+
       })
 
       setSummaryData({ income, expenses, fixedExpenses })

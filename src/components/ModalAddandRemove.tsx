@@ -8,7 +8,8 @@ import formatCurrency from "../data/formatCurrency"
 interface AddAndRemoveModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: FormData & { type: "Add" | "Remove" }) => void
+  onSubmit: (data: FormData & { type: "Add" | "Remove"; useSaldo: boolean }) => void
+  saldoAtual: number // <- saldo disponível
 }
 
 interface FormData {
@@ -19,6 +20,7 @@ export default function AddRemoveModal({
   isOpen,
   onClose,
   onSubmit,
+  saldoAtual
 }: AddAndRemoveModalProps) {
   const [type, setType] = useState<"Add" | "Remove">("Add")
   const [formData, setFormData] = useState<FormData>({ amount: "" })
@@ -87,8 +89,8 @@ export default function AddRemoveModal({
           <Input
             label="Valor"
             type="text"
-            value={formattedAmount}
-            onChange={(v) => handleChange(v)}
+            value={formData.amount ? Number(formData.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : ""}
+            onChange={(v) => handleChange("amount", v)}
             required
             icon={<DollarSign />}
           />
