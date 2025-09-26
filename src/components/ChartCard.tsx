@@ -39,11 +39,11 @@ export default function ChartCard({ title, chartType, data, className }: ChartCa
   const renderChart = () => {
     switch (chartType) {
       case "doughnut":
-        return <Doughnut data={data} />
+        return <Doughnut data={data} options={{ responsive: true, maintainAspectRatio: false }} />
       case "bar":
-        return <Bar data={data} />
+        return <Bar data={data} options={{ responsive: true, maintainAspectRatio: false }} />
       case "line":
-        return <Line data={data} />
+        return <Line data={data} options={{ responsive: true, maintainAspectRatio: false }} />
       default:
         return null
     }
@@ -51,22 +51,22 @@ export default function ChartCard({ title, chartType, data, className }: ChartCa
 
   return (
     <div
-      className={cn(`
-        bg-[#3A3F33] 
-        text-white 
-        rounded-xl 
-        shadow-md 
-        p-6 
-        transition 
-        transform 
-        hover:scale-[1.02] 
-        hover:shadow-lg 
-        hover:animate-shake 
-        font-montserrat 
-      `, className)}
+      className={cn(
+        `
+        bg-[#1E1F24]
+        text-white
+        rounded-2xl
+        shadow-sm
+        border border-gray-800
+        p-5 sm:p-6
+        transition-all
+        hover:border-gray-700
+      `,
+        className
+      )}
     >
-      <h3 className="text-md font-semibold mb-4 tracking-wide">{title}</h3>
-      <div className="h-[220px]">{renderChart()}</div>
+      <h3 className="text-sm font-medium text-gray-400 mb-4">{title}</h3>
+      <div className="h-[220px] lg:h-[280px]">{renderChart()}</div>
     </div>
   )
 }

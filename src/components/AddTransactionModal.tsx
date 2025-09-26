@@ -1,7 +1,12 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import { useAuth } from "../hooks/useAuth"
 import { addDoc, collection } from "firebase/firestore"
 import { db } from "../lib/firebase"
+import { X, DollarSign, CreditCard, Gift, Book, Film, Smartphone, Wifi, Target } from "lucide-react"
+import { Input } from "./Input"
+import { Select } from "./Select"
 
 interface AddTransactionModalProps {
   isOpen: boolean
@@ -10,362 +15,235 @@ interface AddTransactionModalProps {
 }
 
 const incomeCategories = [
-  "Salário",
-  "Freelance",
-  "Investimentos",
-  "Presente",
-  "Outros",
+  { name: "Salário", icon: <DollarSign size={20} /> },
+  { name: "Freelance", icon: <CreditCard size={20} /> },
+  { name: "Investimentos", icon: <Gift size={20} /> },
+  { name: "Presente", icon: <Gift size={20} /> },
+  { name: "Outros", icon: <DollarSign size={20} /> },
 ]
 
 const expenseCategories = [
-  "Alimentação",
-  "Transporte",
-  "Moradia",
-  "Lazer",
-  "Saúde",
-  "Educação",
-  "Outros",
+  { name: "Alimentação", icon: <Gift size={20} /> },
+  { name: "Transporte", icon: <CreditCard size={20} /> },
+  { name: "Moradia", icon: <Book size={20} /> },
+  { name: "Lazer", icon: <Film size={20} /> },
+  { name: "Saúde", icon: <Gift size={20} /> },
+  { name: "Educação", icon: <Book size={20} /> },
+  { name: "Outros", icon: <DollarSign size={20} /> },
 ]
 
 const subscriptionTypes = [
-  "Filmes Streaming",
-  "Cursos",
-  "Telefone",
-  "Internet",
-  "Outros",
+  { name: "Filmes Streaming", icon: <Film size={20} /> },
+  { name: "Cursos", icon: <Book size={20} /> },
+  { name: "Telefone", icon: <Smartphone size={20} /> },
+  { name: "Internet", icon: <Wifi size={20} /> },
+  { name: "Outros", icon: <DollarSign size={20} /> },
 ]
 
 export default function AddTransactionModal({ isOpen, onClose, defaultType }: AddTransactionModalProps) {
   const { user } = useAuth()
+  const [type, setType] = useState(defaultType)
+  const [loading, setLoading] = useState(false)
+  const [rawAmount, setRawAmount] = useState("")  
+  const [rawGoalValue, setRawGoalValue] = useState("")
 
-  // Tipo geral: income, expense, subscription ou goal
-  const [type, setType] = useState<"income" | "expense" | "subscription" | "goal">(defaultType)
+  const [formData, setFormData] = useState({
+    transactionName: "",
+    amount: "",
+    category: "",
+    date: "",
+    subscriptionName: "",
+    subscriptionType: "",
+    goalName: "",
+    goalValue: "",
+    goalDeadline: "",
+  })
 
-  // Campos comuns
-  const [amount, setAmount] = useState("")
-  const [category, setCategory] = useState("")
-  const [date, setDate] = useState("")
-
-  // Campos assinaturas
-  const [subscriptionName, setSubscriptionName] = useState("")
-  const [subscriptionType, setSubscriptionType] = useState("")
-
-  // Campos metas
-  const [goalName, setGoalName] = useState("")
-  const [goalValue, setGoalValue] = useState("")
-  const [goalDeadline, setGoalDeadline] = useState("")
-
-  // Resetar campos ao mudar tipo
   useEffect(() => {
     setType(defaultType)
-
-    setAmount("")
-    setCategory("")
-    setDate("")
-
-    setSubscriptionName("")
-    setSubscriptionType("")
-
-    setGoalName("")
-    setGoalValue("")
-    setGoalDeadline("")
+    setFormData({
+      transactionName: "",
+      amount: "",
+      category: "",
+      date: "",
+      subscriptionName: "",
+      subscriptionType: "",
+      goalName: "",
+      goalValue: "",
+      goalDeadline: "",
+    })
   }, [defaultType])
+  const handleAmountChange = (value: string) => {
+    const onlyNumbers = value.replace(/\D/g, "")
+    setRawAmount(onlyNumbers)
+    setFormData(prev => ({ ...prev, amount: onlyNumbers }))
+  }
 
-  // Também limpa campos específicos ao mudar o tipo manualmente
-  useEffect(() => {
-    setAmount("")
-    setCategory("")
-    setDate("")
+  const handleGoalValueChange = (value: string) => {
+    const onlyNumbers = value.replace(/\D/g, "")
+    setRawGoalValue(onlyNumbers)
+    setFormData(prev => ({ ...prev, goalValue: onlyNumbers }))
+  }
 
-    setSubscriptionName("")
-    setSubscriptionType("")
-
-    setGoalName("")
-    setGoalValue("")
-    setGoalDeadline("")
-  }, [type])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-
-    let data: any = {
-      type,
-      userId: user.uid,
-      createdAt: new Date(),
+  const formatCurrencyForDisplay = (value: string) => {
+    if (!value) return ""
+    return (Number(value) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+  }
+    const handleChange = (field: string, value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
-    switch (type) {
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!user) return
+
+  setLoading(true)
+  try {
+    let data: any = { userId: user.uid }
+
+   switch (type) {
       case "income":
       case "expense":
         data = {
           ...data,
-          amount: parseFloat(amount),
-          category,
-          createdAt: new Date(date),
+          title: formData.transactionName,
+          amount: Number(rawAmount) / 100,
+          type,
+          category: formData.category,
+          date: formData.date ? formData.date : new Date().toISOString()
         }
+        await addDoc(collection(db, "transactions"), data)
         break
 
       case "subscription":
         data = {
           ...data,
-          subscriptionName,
-          subscriptionType,
-          amount: parseFloat(amount),
-          createdAt: new Date(date),
+          title: formData.subscriptionName,
+          value: Number(rawAmount) / 100,
+          type: "subscription", // 🔹 tipo próprio
+          subscriptionType: formData.subscriptionType,
+          category: formData.subscriptionType,
+          date: formData.date ? formData.date : new Date().toISOString()
         }
+        await addDoc(collection(db, "subscriptions"), data)
         break
 
-      case "goal":
-        data = {
-          ...data,
-          goalName,
-          goalValue: parseFloat(goalValue),
-          goalDeadline: new Date(goalDeadline),
-        }
-        break
+        case "goal":
+          data = {
+            ...data,
+            goalName: formData.goalName,
+            goalValue: Number(rawGoalValue) / 100,
+            goalDeadline: formData.goalDeadline ? new Date(formData.goalDeadline).toISOString() : null,
+          }
+          await addDoc(collection(db, "goals"), data)
+          break
+      }
+        onClose()
+      } catch (err) {
+        console.error("Erro ao salvar:", err)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    await addDoc(collection(db, "transactions"), data)
-
-    onClose()
-
-    // Limpa tudo depois de salvar
-    setAmount("")
-    setCategory("")
-    setDate("")
-    setSubscriptionName("")
-    setSubscriptionType("")
-    setGoalName("")
-    setGoalValue("")
-    setGoalDeadline("")
-  }
 
   if (!isOpen) return null
 
   const categories = type === "income" ? incomeCategories : expenseCategories
+  const formattedAmount = formData.amount ? parseFloat(formData.amount).toFixed(2) : "0.00"
 
   return (
-    <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full max-h-[90vh] overflow-auto">
-        <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-          {type === "income" && "Adicionar Receita"}
-          {type === "expense" && "Adicionar Despesa"}
-          {type === "subscription" && "Adicionar Assinatura"}
-          {type === "goal" && "Adicionar Meta"}
-        </h2>
+    <div className="fixed inset-0 bg-[#1E1F24]/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-[#1E1F24] text-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto p-6 relative animate-slideUp">
+        {/* Close button */}
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-700 transition">
+          <X size={24} />
+        </button>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Seletor de tipo */}
-          <div>
-            <label htmlFor="type" className="block font-medium mb-1 text-gray-700">
-              Tipo
-            </label>
-            <select
-              id="type"
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            >
-              <option value="income">Receita</option>
-              <option value="expense">Despesa</option>
-              <option value="subscription">Assinatura</option>
-              <option value="goal">Meta</option>
-            </select>
+        {/* Title */}
+        <h2 className="text-3xl font-bold mb-6 text-center">{type === "income" ? "Receita" : type === "expense" ? "Despesa" : type === "subscription" ? "Assinatura" : "Meta"}</h2>
+
+        {/* Dynamic Money Card */}
+        {(type === "income" || type === "expense") && (
+          <div className={`flex items-center justify-between p-4 rounded-xl mb-6 transition-all duration-300 ${type === "income" ? "bg-green-600/20" : "bg-red-600/20"}`}>
+            <div className="flex items-center gap-3">
+              <DollarSign size={28} className={type === "income" ? "text-green-500" : "text-red-500"} />
+              <div>
+                <p className="text-sm opacity-80">Total {type === "income" ? "Receita" : "Despesa"}</p>
+                <p className="text-2xl font-bold">{formattedAmount} R$</p>
+              </div>
+            </div>
+            <div className="text-xs text-gray-300 opacity-80">Atualize o valor no campo abaixo</div>
           </div>
+        )}
 
-          {/* Campos específicos para receita e despesa */}
+        {/* Type Selector Buttons */}
+        <div className="flex justify-center gap-3 mb-6 flex-wrap">
+          {["income", "expense", "subscription", "goal"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t as any)}
+              className={`px-5 py-2 rounded-full font-medium transition shadow-md ${
+                type === t ? "bg-blue-600 text-white scale-105 shadow-lg" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+            >
+              {t === "income" ? "Receita" : t === "expense" ? "Despesa" : t === "subscription" ? "Assinatura" : "Meta"}
+            </button>
+          ))}
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Receita/Despesa */}
           {(type === "income" || type === "expense") && (
             <>
-              <div>
-                <label htmlFor="amount" className="block font-medium mb-1 text-black">
-                  Valor
-                </label>
-                <input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 1000.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="category" className="block font-medium mb-1 text-black">
-                  Categoria
-                </label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                >
-                  <option value="" disabled>
-                    Selecione a categoria
-                  </option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="date" className="block font-medium mb-1 text-black">
-                  Data
-                </label>
-                <input
-                  id="date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
+              <Input label="Nome" value={formData.transactionName} onChange={(v) => handleChange("transactionName", v)} required icon={<CreditCard />} />
+              <Input
+                label="Valor"
+                type="text"
+                value={formatCurrencyForDisplay(rawAmount)}
+                onChange={(v) => handleAmountChange(v)}
+                required
+                icon={<DollarSign />}
+              />
+              <Select label="Categoria" value={formData.category} onChange={(v) => handleChange("category", v)} options={categories} placeholder="Selecione a categoria" />
+              <Input label="Data" type="date" value={formData.date} onChange={(v) => handleChange("date", v)} required />
             </>
           )}
 
-          {/* Campos para assinatura */}
+          {/* Assinatura */}
           {type === "subscription" && (
             <>
-              <div>
-                <label htmlFor="subscriptionName" className="block font-medium mb-1 text-black">
-                  Nome da Assinatura
-                </label>
-                <input
-                  id="subscriptionName"
-                  type="text"
-                  placeholder="Ex: Netflix"
-                  value={subscriptionName}
-                  onChange={(e) => setSubscriptionName(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="subscriptionType" className="block font-medium mb-1 text-black">
-                  Tipo de Assinatura
-                </label>
-                <select
-                  id="subscriptionType"
-                  value={subscriptionType}
-                  onChange={(e) => setSubscriptionType(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                >
-                  <option value="" disabled>
-                    Selecione o tipo
-                  </option>
-                  {subscriptionTypes.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="amount" className="block font-medium mb-1 text-black">
-                  Valor Mensal
-                </label>
-                <input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 29.90"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="date" className="block font-medium mb-1 text-black">
-                  Data da Assinatura
-                </label>
-                <input
-                  id="date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
+              <Input label="Nome da Assinatura" value={formData.subscriptionName} onChange={(v) => handleChange("subscriptionName", v)} required icon={<CreditCard />} />
+              <Select label="Tipo de Assinatura" value={formData.subscriptionType} onChange={(v) => handleChange("subscriptionType", v)} options={subscriptionTypes} placeholder="Selecione o tipo" />
+              <Input label="Valor Mensal" type="number" value={formData.amount} onChange={(v) => handleChange("amount", v)} required icon={<DollarSign />} />
+              <Input label="Data da Assinatura" type="date" value={formData.date} onChange={(v) => handleChange("date", v)} required />
             </>
           )}
 
-          {/* Campos para metas */}
+          {/* Meta */}
           {type === "goal" && (
             <>
-              <div>
-                <label htmlFor="goalName" className="block font-medium mb-1 text-black">
-                  Nome da Meta
-                </label>
-                <input
-                  id="goalName"
-                  type="text"
-                  placeholder="Ex: Comprar um carro"
-                  value={goalName}
-                  onChange={(e) => setGoalName(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="goalValue" className="block font-medium mb-1 text-black">
-                  Valor da Meta
-                </label>
-                <input
-                  id="goalValue"
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 25000.00"
-                  value={goalValue}
-                  onChange={(e) => setGoalValue(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="goalDeadline" className="block font-medium mb-1 text-black">
-                  Até Quando Deseja Realizar
-                </label>
-                <input
-                  id="goalDeadline"
-                  type="date"
-                  value={goalDeadline}
-                  onChange={(e) => setGoalDeadline(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
+              <Input label="Nome da Meta" value={formData.goalName} onChange={(v) => handleChange("goalName", v)} required icon={<Target />} />
+              <Input
+                label="Valor da Meta"
+                type="text"
+                value={formatCurrencyForDisplay(rawGoalValue)}
+                onChange={(v) => handleGoalValueChange(v)}
+                required
+                icon={<DollarSign />}
+              />
+              <Input label="Prazo Final" type="date" value={formData.goalDeadline} onChange={(v) => handleChange("goalDeadline", v)} required />
             </>
           )}
 
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2 rounded-md border border-gray-400 text-black hover:bg-gray-100 transition"
-            >
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="px-5 py-2 rounded-xl border border-gray-500 text-gray-300 hover:bg-gray-700 transition">
               Cancelar
             </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
-            >
-              Salvar
+            <button type="submit" disabled={loading} className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50">
+              {loading ? "Salvando..." : "Salvar"}
             </button>
           </div>
         </form>
@@ -373,3 +251,6 @@ export default function AddTransactionModal({ isOpen, onClose, defaultType }: Ad
     </div>
   )
 }
+
+
+

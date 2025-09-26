@@ -1,6 +1,6 @@
 'use client'
 
-import { HomeIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { HomeIcon, ArrowRightOnRectangleIcon, StarIcon } from '@heroicons/react/24/outline'
 import { useRouter, usePathname } from 'next/navigation'
 import React from 'react'
 import clsx from 'clsx'
@@ -11,39 +11,57 @@ const Sidebar: React.FC = () => {
   const pathname = usePathname()
   const { logout } = useAuth()
 
-  const isActive = pathname === '/' || pathname === '/home'
-
   const handleLogout = async () => {
     await logout()
     router.push('/auth')
   }
 
+  // Função para verificar se o ícone está ativo
+  const isActive = (path: string) => pathname === path
+
   return (
-    <aside className="w-16 sm:w-20 h-screen flex flex-col justify-between items-center py-6 shadow-md">
+    <aside className="w-16 sm:w-20 h-screen flex flex-col justify-between items-center py-6 shadow-md bg-[#1E1F24]">
       {/* Topo vazio ou logotipo futuro */}
       <div />
 
       {/* Ícones centrais */}
       <div className="flex flex-col items-center space-y-6">
+        {/* Home */}
         <button
           onClick={() => router.push('/home')}
           className={clsx(
             'p-3 rounded-full transition-colors duration-200 hover:cursor-pointer',
-            isActive ? 'bg-orange-500' : 'hover:bg-gray-300'
+            isActive('/home') || isActive('/') ? 'bg-violet-500' : 'hover:bg-gray-300'
           )}
         >
           <HomeIcon
             className={clsx(
               'h-6 w-6',
-              isActive ? 'text-white' : 'text-gray-700'
+              isActive('/home') || isActive('/') ? 'text-white' : 'text-gray-700'
+            )}
+          />
+        </button>
+
+        {/* Metas */}
+        <button
+          onClick={() => router.push('/metas')}
+          className={clsx(
+            'p-3 rounded-full transition-colors duration-200 hover:cursor-pointer',
+            isActive('/metas') ? 'bg-orange-500' : 'hover:bg-gray-300'
+          )}
+        >
+          <StarIcon
+            className={clsx(
+              'h-6 w-6',
+              isActive('/metas') ? 'text-white' : 'text-gray-700'
             )}
           />
         </button>
 
         {/* Outros ícones fictícios */}
+        {/* <div className="w-6 h-6 bg-gray-400 rounded-full" />
         <div className="w-6 h-6 bg-gray-400 rounded-full" />
-        <div className="w-6 h-6 bg-gray-400 rounded-full" />
-        <div className="w-6 h-6 bg-gray-400 rounded-full" />
+        <div className="w-6 h-6 bg-gray-400 rounded-full" /> */}
       </div>
 
       {/* Botão de logout no rodapé */}
