@@ -83,18 +83,20 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
 
         {/* Cartão visual */}
         <div
-          className="rounded-xl p-4 mb-6"
+          className="rounded-xl p-4 mb-6 gap-6"
           style={{ backgroundColor: bank.color || "#4c1d95" }}
         >
           <div className="flex justify-between mb-4">
             <span className="font-semibold">{bank.name}</span>
             <span className="font-semibold">{brand}</span>
           </div>
-          <div className="text-xl tracking-widest mb-2">
-            **** **** **** {cardNumber || "0000"}
+          <div className="flex justify-between text-sm mb-3">
+            <span className="text-md" >{cardName || "Nome do titular"}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>{cardName || "Nome do titular"}</span>
+          <div className="text-md tracking-widest mb-2">
+            **** **** **** {cardNumber || "0000"}
+          </div>
             <span>Dia da Fatura: {billingDay}</span>
           </div>
         </div>

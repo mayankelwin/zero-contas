@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { JSX } from "react"
 import { Query, FirestoreError, onSnapshot } from "firebase/firestore"
-import { incomeCategories, expenseCategories, subscriptionTypes } from "../data/categories"
 
 interface CardItem {
   id: string
@@ -57,24 +56,16 @@ export default function CardGlobal({
         let filtered: CardItem[] = []
 
         if (cardType === "transaction") {
-        // pega todas as transações até hoje
-        filtered = data.filter((item) => {
-          if (!item.date) return false
-          const d = new Date(item.date)
-          d.setHours(0, 0, 0, 0)
-          return d <= today
-        })
-
-        // ordena por data decrescente (mais recente primeiro)
-        filtered.sort((a, b) => {
-          const da = a.date ? new Date(a.date).getTime() : 0
-          const db = b.date ? new Date(b.date).getTime() : 0
-          return db - da
-        })
-      }
+          filtered = data
+            .filter((item) => item.date && new Date(item.date) <= today)
+            .sort(
+              (a, b) =>
+                (b.date ? new Date(b.date).getTime() : 0) -
+                (a.date ? new Date(a.date).getTime() : 0)
+            )
+        }
 
         if (cardType === "subscription") {
-          // sempre mostra todas as assinaturas
           filtered = data
         }
 
@@ -88,6 +79,15 @@ export default function CardGlobal({
     )
     return () => unsubscribe()
   }, [firebaseQuery, reloadFlag, cardType])
+
+  /* --- FORMAT FUNCTIONS --- */
+  const formatDate = (date?: string) =>
+    date ? new Date(date).toLocaleDateString("pt-BR") : "-"
+  const formatCurrency = (value?: number) =>
+    (value ?? 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
 
   /* --- RENDER --- */
   return (
@@ -103,53 +103,46 @@ export default function CardGlobal({
       ) : (
         <ul className="divide-y divide-gray-800 overflow-y-auto max-h-72">
           {items.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-4">Nenhum item encontrado</p>
+            <p className="text-gray-500 text-sm text-center py-4">
+              Nenhum item encontrado
+            </p>
           ) : (
             items.map((item) => (
               <li
                 key={item.id}
-                className="flex items-center justify-between py-3 cursor-pointer"
+                className="grid grid-cols-4 gap-4 py-3 items-center"
               >
+                {/* Nome + Ícone */}
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-[#2A2B31] rounded-full">{getIcon(item)}</div>
                   <div>
-                   {item && (
-                      <p className="text-sm font-semibold text-gray-200">
-                        {item.title ?? item.name ?? "Sem nome"}
-                      </p>
-                    )}
-
-                    {/* 🔹 mostra categoria padronizada */}
-                    {cardType === "subscription" ? (
-                      <p className="text-xs text-gray-500">
-                        {item.category ?? item.subscriptionType}
-                        </p>
-                    ) : (
-                      <p className="text-xs text-gray-500">
-                        {item.category ?? "Sem categoria"}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-400">
-                      {item.date ?? item.nextBilling}
+                    <p className="text-sm font-semibold text-gray-200">
+                      {item.title ?? item.name ?? "Sem nome"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {cardType === "subscription"
+                        ? item.category ?? item.subscriptionType ?? "-"
+                        : item.category ?? "-"}
                     </p>
                   </div>
                 </div>
 
-                {formatValue ? (
-                  <p className="text-sm font-semibold">{formatValue(item)}</p>
-                ) : cardType === "subscription" ? (
-                  <p className="text-sm font-semibold text-blue-400">
-                    - R$ {(item.amount ?? 0).toFixed(2)}
-                  </p>
-                ) : (
-                  <p
-                    className={`text-sm font-semibold ${
-                      item.type === "expense" ? "text-red-400" : "text-green-400"
-                    }`}
-                  >
-                    {item.type === "expense" ? "-" : "+"} R$ {(item.amount ?? 0).toFixed(2)}
-                  </p>
-                )}
+                {/* Data */}
+                <p className="text-xs text-gray-400">{formatDate(item.date ?? item.nextBilling)}</p>
+
+               {/* Valor */}
+                <p
+                  className={`text-sm font-semibold ${
+                    item.type === "expense" ? "text-red-400" : "text-green-400"
+                  }`}
+                >
+                  {formatValue
+                    ? formatValue(item)
+                    : cardType === "subscription"
+                    ? `- ${formatCurrency(item.value ?? 0)}`
+                    : `${item.type === "expense" ? "-" : "+"} ${formatCurrency(item.amount ?? 0)}`}
+                </p>
+
               </li>
             ))
           )}
