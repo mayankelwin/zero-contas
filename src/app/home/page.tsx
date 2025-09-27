@@ -177,7 +177,7 @@ export default function Home() {
         <Header />
         <div className="p-6 space-y-6">
           {/* 1. Resumo geral */}
-          <DashboardSummary />
+          <DashboardSummary reloadFlag={reloadFlag} />
           <div className="flex justify-end mb-4">
             <button
               onClick={handleDeleteAllData}
