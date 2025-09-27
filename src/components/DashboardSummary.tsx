@@ -336,7 +336,7 @@ export default function DashboardSummary({ reloadFlag }: DashboardSummaryProps) 
                             cardName={card.cardName ?? "Meu Cartão"}
                             brand={card.brand ?? "Visa"}
                             cardNumber={card.cardNumber ?? "0000"}
-                            billingDay={card.billingDay ?? 1}
+                            billingDay={card.billingDay ?? 1} 
                             interestRate={card.interestRate ?? 0}
                             creditLimit={card.creditLimit ?? 0}
                             usedCredit={card.usedCredit ?? 0}
