@@ -9,6 +9,7 @@ import { db } from "@/src/lib/firebase"
 import { useAuth } from "@/src/context/AuthContext"
 import { useCategoryChartData } from "@/src/hooks/useCategoryChartData"
 import { CardItem } from "@/src/types/transactions"
+import AddTransactionModal from "@/src/components/AddTransactionModal"
 
 export function useHomeLogic() {
   const router = useRouter()
@@ -163,7 +164,7 @@ export function useHomeLogic() {
     return allTxns.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [transactions, goals])
 
-
+       
   return {
     user,
     loading,

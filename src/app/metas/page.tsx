@@ -1,7 +1,7 @@
 "use client"
 
-import Header from "@/src/components/Header"
-import Sidebar from "@/src/components/Sidebar"
+import Header from "@/src/components/layout/Header"
+import Sidebar from "@/src/components/layout/Sidebar"
 import { Plus, Star, Edit2, X, Check } from "lucide-react"
 import { useGoalsLogic } from "@/src/hooks/useGoalsLogic"
 import { useState, useMemo } from "react"

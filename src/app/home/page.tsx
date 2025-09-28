@@ -1,7 +1,7 @@
 "use client"
 
-import Header from "@/src/components/Header"
-import Sidebar from "@/src/components/Sidebar"
+import Header from "@/src/components/layout/Header"
+import Sidebar from "@/src/components/layout/Sidebar"
 import DashboardSummary from "@/src/components/DashboardSummary"
 import ChartCard from "@/src/components/ChartCard"
 import AddTransactionModal from "@/src/components/AddTransactionModal"

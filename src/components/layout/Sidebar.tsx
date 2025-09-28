@@ -19,10 +19,11 @@ const Sidebar: React.FC = () => {
   const isActive = (path: string) => pathname === path
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-16 sm:w-20 flex flex-col justify-between items-center py-6 shadow-md bg-[#1E1F24] z-50">
+    <aside className="fixed top-0 left-0 h-screen w-20 sm:w-20 flex flex-col justify-between items-center py-6 shadow-md bg-[#1E1F24] z-50">
       {/* Topo: logo ou espaço */}
-      <div className="flex flex-col items-center">
-        <p className='text-md'>Zero Contas</p>
+      <div className="flex flex-col items-center text-bold">
+        <p className='text-sm text-bold'>Zero</p>
+        <p className='text-sm text-bold'>Contas</p>
       </div>
 
       {/* Ícones centrais */}
