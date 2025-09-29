@@ -18,6 +18,23 @@
     --foreground: #F4F4F5;
   }
 }
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.container-cartoes {
+    overflow-y: auto;    /* Permite rolagem */
+    scrollbar-width: none; /* Firefox - esconde a barra */
+    -ms-overflow-style: none; /* IE e Edge - esconde a barra */
+}
+
+/* Chrome, Safari e Opera - esconde a barra */
+.container-cartoes::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE e Edge */
+  scrollbar-width: none;     /* Firefox */
+}
 
 body {
   background: var(--background);

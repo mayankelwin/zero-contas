@@ -10,6 +10,7 @@ interface AddButtonProps {
 const AddButton: React.FC<AddButtonProps> = ({ onClick }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="
         fixed bottom-6 right-6

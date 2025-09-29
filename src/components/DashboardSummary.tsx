@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { db } from "@/src/lib/firebase"
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore"
 import { useAuth } from "@/src/context/AuthContext"
-import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Wallet, Target, TrendingDown } from "lucide-react"
 import { toast, ToastContainer } from "react-toastify"
 import AddRemoveModal from "./ModalAddandRemove"
 import AddCardModal from "./AddCardModal"
@@ -13,17 +13,41 @@ import CardsSection from "./CardsSection"
 import FavoriteGoal from "./FavoriteGoal"
 import AddAndRemoveModal from "./ModalAddandRemove"
 
-
 const formatCurrencyBR = (value: number | string) => {
   const numberValue = typeof value === "string" ? parseFloat(value) || 0 : value
   return numberValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+}
+
+// Função para calcular porcentagem de mudança
+const calculatePercentageChange = (current: number, previous: number): string => {
+  if (previous === 0) return current > 0 ? "+100%" : "0%"
+  const change = ((current - previous) / previous) * 100
+  return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`
+}
+
+// Função para filtrar transações por mês
+const getTransactionsByMonth = (transactions: any[], monthOffset: number = 0) => {
+  const now = new Date()
+  const targetDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1)
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 1)
+  
+  return transactions.filter(transaction => {
+    const transactionDate = new Date(transaction.createdAt)
+    return transactionDate >= targetDate && transactionDate < nextMonth
+  })
 }
 
 export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }) {
   const { user } = useAuth()
 
   // 🟢 Estados
-  const [summary, setSummary] = useState({ total: 0, income: 0, expenses: 0, fixedExpenses: 0 })
+  const [summary, setSummary] = useState({ 
+    total: 0, 
+    income: 0, 
+    expenses: 0, 
+    fixedExpenses: 0,
+    previousMonth: { income: 0, expenses: 0, fixedExpenses: 0 }
+  })
   const [saldoMetas, setSaldoMetas] = useState(0)
   const [cardsList, setCardsList] = useState<any[]>([])
   const [favoriteGoal, setFavoriteGoal] = useState<any>(null)
@@ -32,6 +56,7 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
   const [addCardOpen, setAddCardOpen] = useState(false)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const [editCardData, setEditCardData] = useState<any>(null)
+  const [allTransactions, setAllTransactions] = useState<any[]>([])
 
   // 🔹 Buscar meta favorita
   useEffect(() => {
@@ -59,18 +84,18 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
           if (!allSnapshot.empty) {
             const docSnap = allSnapshot.docs[0]
             const data = docSnap.data()
-             const savedAmount = Number(data.savedAmount ?? 0)
+            const savedAmount = Number(data.savedAmount ?? 0)
             setFavoriteGoal({
               id: docSnap.id,
               goalName: data.goalName,
               goalValue: Number(data.goalValue ?? 0),
               savedAmount: Number(data.savedAmount ?? 0),
             })
-           setSaldoMetas(savedAmount) 
-        } else {
-          setFavoriteGoal(null)
-          setSaldoMetas(0) 
-        }
+            setSaldoMetas(savedAmount) 
+          } else {
+            setFavoriteGoal(null)
+            setSaldoMetas(0) 
+          }
         })
         return () => unsubscribeAllGoals()
       }
@@ -78,32 +103,69 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
     return () => unsubscribeFavorite()
   }, [user])
 
-  // 🔹 Resumo financeiro
+  // 🔹 Buscar todas as transações para cálculo de porcentagens
   useEffect(() => {
     if (!user) return
 
-    const transactionsQuery = query(collection(db, "transactions"), where("userId", "==", user.uid))
-    const unsubscribeTransactions = onSnapshot(transactionsQuery, snapshot => {
-      let income = 0, expenses = 0
-      snapshot.forEach(doc => {
-        const data = doc.data()
-        if (data.type === "income") income += Number(data.amount ?? 0)
-        if (data.type === "expense") expenses += Number(data.amount ?? 0)
+    const q = query(collection(db, "transactions"), where("userId", "==", user.uid))
+    const unsubscribe = onSnapshot(q, snapshot => {
+      const transactions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setAllTransactions(transactions)
+
+      // Calcular mês atual
+      const currentMonthTransactions = getTransactionsByMonth(transactions, 0)
+      const previousMonthTransactions = getTransactionsByMonth(transactions, 1)
+
+      let currentIncome = 0
+      let currentExpenses = 0
+      let currentFixedExpenses = 0
+      let previousIncome = 0
+      let previousExpenses = 0
+      let previousFixedExpenses = 0
+
+      // Mês atual
+      currentMonthTransactions.forEach(transaction => {
+        if (transaction.type === "balance" || transaction.type === "income") {
+          currentIncome += Number(transaction.amount ?? 0)
+        }
+        if (transaction.type === "expense") {
+          currentExpenses += Number(transaction.amount ?? 0)
+        }
+        if (transaction.type === "fixedExpense") {
+          currentFixedExpenses += Number(transaction.amount ?? 0)
+        }
       })
-      setSummary(prev => ({ ...prev, income, expenses, total: Math.max(income - expenses - prev.fixedExpenses, 0) }))
+
+      // Mês anterior
+      previousMonthTransactions.forEach(transaction => {
+        if (transaction.type === "balance" || transaction.type === "income") {
+          previousIncome += Number(transaction.amount ?? 0)
+        }
+        if (transaction.type === "expense") {
+          previousExpenses += Number(transaction.amount ?? 0)
+        }
+        if (transaction.type === "fixedExpense") {
+          previousFixedExpenses += Number(transaction.amount ?? 0)
+        }
+      })
+
+      setSummary({
+        income: currentIncome,
+        expenses: currentExpenses,
+        fixedExpenses: currentFixedExpenses,
+        total: Math.max(currentIncome - currentExpenses - currentFixedExpenses, 0),
+        previousMonth: {
+          income: previousIncome,
+          expenses: previousExpenses,
+          fixedExpenses: previousFixedExpenses
+        }
+      })
     })
 
-    const subscriptionsQuery = query(collection(db, "subscriptions"), where("userId", "==", user.uid))
-    const unsubscribeSubscriptions = onSnapshot(subscriptionsQuery, snapshot => {
-      let fixedExpenses = 0
-      snapshot.forEach(doc => fixedExpenses += Number(doc.data().value ?? 0))
-      setSummary(prev => ({ ...prev, fixedExpenses, total: Math.max(prev.income - prev.expenses - fixedExpenses, 0) }))
-    })
-
-    return () => {
-      unsubscribeTransactions()
-      unsubscribeSubscriptions()
-    }
+    return () => unsubscribe()
   }, [user])
 
   // 🔹 Buscar cartões do usuário
@@ -157,13 +219,58 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
     }
   }
 
-  // 🔹 Cards principais
+  // 🔹 Calcular porcentagens dinâmicas
+  const incomePercentage = calculatePercentageChange(summary.income, summary.previousMonth.income)
+  const incomeChangeType = summary.income >= summary.previousMonth.income ? 'positive' : 'negative'
+  
+  const saldoPercentage = summary.income > 0 ? `${((summary.total / summary.income) * 100).toFixed(1)}% da renda` : "0% da renda"
+  
+  const goalPercentage = favoriteGoal && favoriteGoal.goalValue > 0 
+    ? `${((saldoMetas / favoriteGoal.goalValue) * 100).toFixed(1)}% da meta` 
+    : "Sem meta"
+
+  // 🔹 Cards principais consolidados (apenas 4 cards)
   const cards = [
-    { label: "Saldo", value: summary.total, icon: Wallet, color: "text-gray-300", valueColor: "text-white" },
-    { label: "Receitas", value: summary.income, icon: ArrowUpRight, color: "text-green-400", valueColor: "text-green-400" },
-    { label: "Despesas", value: summary.expenses, icon: ArrowDownRight, color: "text-red-400", valueColor: "text-red-400" },
-    { label: "Despesas Fixas", value: summary.fixedExpenses, icon: ArrowDownRight, color: "text-yellow-400", valueColor: "text-yellow-400" },
-    { label: "Saldo Metas", value: saldoMetas, icon: Wallet, color: "text-purple-400", valueColor: "text-purple-400" }
+    { 
+      label: "Saldo Total", 
+      value: summary.total, 
+      icon: Wallet, 
+      color: "text-blue-400", 
+      valueColor: "text-white",
+      subtitle: "Disponível",
+      change: saldoPercentage,
+      changeType: "positive"
+    },
+    { 
+      label: "Receitas", 
+      value: summary.income, 
+      icon: ArrowUpRight, 
+      color: "text-green-400", 
+      valueColor: "text-green-400",
+      subtitle: "Este mês",
+      change: incomePercentage,
+      changeType: incomeChangeType
+    },
+    { 
+      label: "Despesas Totais", 
+      value: summary.expenses + summary.fixedExpenses, 
+      icon: TrendingDown, 
+      color: "text-red-400", 
+      valueColor: "text-red-400",
+      subtitle: "Este mês",
+      change: `-${formatCurrencyBR(summary.expenses + summary.fixedExpenses)}`,
+      changeType: "negative"
+    },
+    { 
+      label: "Saldo Metas", 
+      value: saldoMetas, 
+      icon: Target, 
+      color: "text-purple-400", 
+      valueColor: "text-purple-400",
+      subtitle: "Guardado",
+      change: goalPercentage,
+      changeType: "positive"
+    }
   ]
 
   return (
@@ -213,7 +320,7 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
               await addDoc(collection(db, "transactions"), {
                 userId: user.uid,
                 amount: amount,
-                type: "income", 
+                type: data.transactionType === "income" ? "income" : "expense",
                 category: "meta", 
                 description: `${data.transactionType === "income" ? "Adicionado" : "Retirado"} da meta ${selectedGoal.goalName}`,
                 createdAt: new Date().toISOString(),

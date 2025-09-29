@@ -51,35 +51,42 @@ export function useHomeLogic() {
     const subscriptionsQuery = query(collection(db, "subscriptions"), where("userId", "==", user.uid))
     const goalsQuery = query(collection(db, "goals"), where("userId", "==", user.uid))
 
+    
+    // Transações normais
     const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
       const txns: CardItem[] = []
-      let income = 0
-      let expenses = 0
 
       snapshot.forEach(docSnap => {
         const data = docSnap.data() as CardItem
         txns.push({ id: docSnap.id, ...data })
-        const amount = Number(data.amount ?? 0)
-
-        if (data.type === "income") income += amount
-        else if (data.type === "expense") expenses += amount
       })
 
-      setTransactions(prev => ({ ...prev, transactions: txns }))
+      setTransactions(prev => {
+        // remove antigas "income/expense" para evitar duplicatas
+        const filteredPrev = prev.filter(t => t.type !== "income" && t.type !== "expense")
+        return [...filteredPrev, ...txns]
+      })
+
+      const income = txns.filter(t => t.type === "income").reduce((acc, t) => acc + Number(t.amount ?? 0), 0)
+      const expenses = txns.filter(t => t.type === "expense").reduce((acc, t) => acc + Number(t.amount ?? 0), 0)
       setSummaryData(prev => ({ ...prev, income, expenses }))
     })
 
+    // Subscriptions
     const unsubscribeSubscriptions = onSnapshot(subscriptionsQuery, (snapshot) => {
       const subs: CardItem[] = []
-      let fixedExpenses = 0
 
       snapshot.forEach(docSnap => {
         const data = docSnap.data() as CardItem
         subs.push({ id: docSnap.id, ...data, type: "fixedExpense" })
-        fixedExpenses += Number(data.value ?? 0)
       })
 
-      setTransactions(prev => ({ ...prev, subscriptions: subs }))
+      setTransactions(prev => {
+        const filteredPrev = prev.filter(t => t.type !== "fixedExpense")
+        return [...filteredPrev, ...subs]
+      })
+
+      const fixedExpenses = subs.reduce((acc, s) => acc + Number(s.value ?? 0), 0)
       setSummaryData(prev => ({ ...prev, fixedExpenses }))
     })
 
@@ -147,10 +154,8 @@ export function useHomeLogic() {
   }), [summaryData])
 
   // 🔹 Transações recentes incluindo metas
-  const recentTransactions = useMemo(() => {
-    const allTxns: CardItem[] = [
-      ...(transactions.transactions ?? []),
-      ...(transactions.subscriptions ?? []),
+    const recentTransactions = useMemo(() => [
+      ...transactions,
       ...goals.map(goal => ({
         id: goal.id,
         amount: goal.savedAmount ?? 0,
@@ -159,12 +164,8 @@ export function useHomeLogic() {
         description: `Saldo guardado da meta: ${goal.goalName}`,
         createdAt: goal.updatedAt ?? new Date().toISOString(),
       }))
-    ]
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [transactions, goals])
 
-    return allTxns.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [transactions, goals])
-
-       
   return {
     user,
     loading,

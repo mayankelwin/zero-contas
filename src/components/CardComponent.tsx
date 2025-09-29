@@ -13,8 +13,8 @@ interface CardItem {
   value?: number
   category?: string
   subscriptionType?: string
-  date?: string // para transações
-  nextBilling?: string // para assinaturas
+  date?: string 
+  nextBilling?: string 
 }
 
 interface GenericCardProps {
@@ -66,9 +66,11 @@ export default function CardGlobal({
         }
 
         if (cardType === "subscription") {
-          filtered = data
+          filtered = data.sort(
+            (a, b) =>
+              new Date(a.nextBilling ?? 0).getTime() - new Date(b.nextBilling ?? 0).getTime()
+          )
         }
-
         setItems(filtered)
         setLoading(false)
       },
@@ -107,47 +109,50 @@ export default function CardGlobal({
               Nenhum item encontrado
             </p>
           ) : (
-            items.map((item) => (
-              <li
-                key={item.id}
-                className="grid grid-cols-4 gap-4 py-3 items-center"
-              >
-                {/* Nome + Ícone */}
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#2A2B31] rounded-full">{getIcon(item)}</div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-200">
-                      {item.title ?? item.name ?? "Sem nome"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {cardType === "subscription"
-                        ? item.category ?? item.subscriptionType ?? "-"
-                        : item.category ?? "-"}
-                    </p>
+            items.map((item) => {
+              const displayValue = item.amount ?? item.value ?? 0;
+
+              return (
+                <li key={item.id} className="w-full grid grid-cols-3 gap-4 py-3 items-center justify-between align-center">
+                  {/* Nome + Ícone */}
+                  <div className="flex items-center gap-3 ">
+                    <div className="p-2 bg-[#2A2B31] rounded-full">{getIcon(item)}</div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-200">
+                        {item.title ?? item.name ?? "Sem nome"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {item.category ?? item.subscriptionType ?? "Sem categoria"}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Data */}
-                <p className="text-xs text-gray-400">{formatDate(item.date ?? item.nextBilling)}</p>
+                  {/* Data */}
+                  <p className="text-xs text-gray-400 text-center">
+                    {formatDate(item.date ?? item.nextBilling)}
+                  </p>
 
-               {/* Valor */}
-                <p
-                  className={`text-sm font-semibold ${
-                    item.type === "expense" ? "text-red-400" : "text-green-400"
-                  }`}
-                >
-                  {formatValue
-                    ? formatValue(item)
-                    : cardType === "subscription"
-                    ? `- ${formatCurrency(item.value ?? 0)}`
-                    : `${item.type === "expense" ? "-" : "+"} ${formatCurrency(item.amount ?? 0)}`}
-                </p>
-
-              </li>
-            ))
+                  {/* Valor */}
+                  <p
+                    className={`text-sm font-semibold text-center ${
+                      item.type === "expense" || cardType === "subscription"
+                        ? "text-red-400"
+                        : "text-green-400"
+                    }`}
+                  >
+                    {formatValue
+                      ? formatValue(item)
+                      : cardType === "subscription"
+                      ? `- ${formatCurrency(displayValue)}`
+                      : `${item.type === "expense" ? "-" : "+"} ${formatCurrency(displayValue)}`}
+                  </p>
+                </li>
+              )
+            })
           )}
         </ul>
       )}
+    
     </div>
   )
 }
