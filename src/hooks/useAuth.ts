@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { login, register, loginWithGoogle } from "./../lib/auth"
 import { getAuth, onAuthStateChanged, User } from "firebase/auth"
@@ -16,15 +16,16 @@ export const useAuth = () => {
   const [form, setForm] = useState<AuthForm>({ username: "", email: "", password: "" })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<User | null>(null) // <- Aqui
+  const [user, setUser] = useState<User | null>(null)
+  const [userLoaded, setUserLoaded] = useState(false)
 
   const router = useRouter()
 
-  // Escuta mudanças no usuário autenticado
   useEffect(() => {
     const auth = getAuth()
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
+      setUserLoaded(true)
     })
 
     return () => unsubscribe()
@@ -53,7 +54,6 @@ export const useAuth = () => {
       }
 
       if (userCredential) {
-        setUser(userCredential) // <- Atualiza estado
         router.push("/home")
       }
 
@@ -75,7 +75,6 @@ export const useAuth = () => {
       const userCredential = await loginWithGoogle()
 
       if (userCredential) {
-        setUser(userCredential) // <- Atualiza estado
         router.push("/home")
       }
 
@@ -89,15 +88,18 @@ export const useAuth = () => {
     }
   }
 
-  return {
+  const authValue = useMemo(() => ({
     mode,
     form,
-    user, // <- RETORNANDO O USER AQUI!
+    user,
     loading,
     error,
+    userLoaded,
     toggleMode,
     handleChange,
     handleSubmit,
     handleGoogleAuth,
-  }
+  }), [mode, form, user, loading, error, userLoaded])
+
+  return authValue
 }

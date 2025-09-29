@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useAuth } from "../hooks/useAuth"
 import { collection, getDocs } from "firebase/firestore"
 import { db } from "../lib/firebase"
@@ -41,24 +41,39 @@ export function useAddTransaction(defaultType: TransactionType) {
     installments: 1,
   })
 
-  // Atualiza cartão selecionado
+  const handleChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }, [])
+
+  const handleAmountChange = useCallback((value: string) => {
+    setRawAmount(value.replace(/\D/g, ""))
+  }, [])
+
+  const handleGoalValueChange = useCallback((value: string) => {
+    setRawGoalValue(value.replace(/\D/g, ""))
+  }, [])
+
   useEffect(() => {
     if (selectedCard) {
       setFormData(prev => ({ ...prev, card: selectedCard.cardNumber, installments }))
     }
   }, [selectedCard, installments])
 
-  // Fetch cards do Firestore
   useEffect(() => {
-    if (!user) return
+    if (!user?.uid) return 
+    
     const fetchCards = async () => {
-      const snapshot = await getDocs(collection(db, "cards"))
-      setCards(snapshot.docs.map(doc => doc.data() as CardData))
+      try {
+        const snapshot = await getDocs(collection(db, "cards"))
+        setCards(snapshot.docs.map(doc => doc.data() as CardData))
+      } catch (error) {
+        console.error("Erro ao buscar cartões:", error)
+      }
     }
+    
     fetchCards()
-  }, [user])
+  }, [user?.uid])
 
-  // Reset quando muda o tipo
   useEffect(() => {
     setType(defaultType)
     setFormData({
@@ -75,19 +90,14 @@ export function useAddTransaction(defaultType: TransactionType) {
     setRawGoalValue("")
   }, [defaultType])
 
-  const handleChange = (field: string, value: any) =>
-    setFormData(prev => ({ ...prev, [field]: value }))
-
-  const handleAmountChange = (value: string) => setRawAmount(value.replace(/\D/g, ""))
-  const handleGoalValueChange = (value: string) => setRawGoalValue(value.replace(/\D/g, ""))
-
-  const formatCurrencyForDisplay = (value: string) => {
+  const formatCurrencyForDisplay = useCallback((value: string) => {
     if (!value) return ""
     return (parseFloat(value) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-  }
+  }, [])
 
-  const handleSubmit = async (onClose: () => void) => {
-    if (!user) return
+  const handleSubmit = useCallback(async (onClose: () => void) => {
+    if (!user?.uid) return
+    
     setLoading(true)
 
     try {
@@ -111,9 +121,9 @@ export function useAddTransaction(defaultType: TransactionType) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.uid, type, formData, rawAmount, rawGoalValue])
 
-  return {
+  const transactionValue = useMemo(() => ({
     type,
     setType,
     loading,
@@ -130,5 +140,11 @@ export function useAddTransaction(defaultType: TransactionType) {
     handleGoalValueChange,
     formatCurrencyForDisplay,
     handleSubmit,
-  }
+  }), [
+    type, loading, rawAmount, rawGoalValue, cards, selectedCard, 
+    installments, formData, handleChange, handleAmountChange, 
+    handleGoalValueChange, formatCurrencyForDisplay, handleSubmit
+  ])
+
+  return transactionValue
 }
