@@ -238,5 +238,5 @@ export function SearchInput(props: InputProps) {
 }
 
 // Ícones auxiliares (importar do lucide-react)
-function DollarSign(props: any) { return <div>💰</div> } // Substituir pelo ícone real
-function Search(props: any) { return <div>🔍</div> } // Substituir pelo ícone real
+function DollarSign(props: any) { return <div>💰</div> } 
+function Search(props: any) { return <div>🔍</div> } 

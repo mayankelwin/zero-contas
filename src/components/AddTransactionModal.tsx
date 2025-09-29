@@ -98,36 +98,22 @@ export default function AddTransactionModal({
     handleGoalValueChange,
     formatCurrencyForDisplay,
     handleSubmit,
+    resetForm
   } = useAddTransaction(defaultType)
 
   const [isCardModalOpen, setIsCardModalOpen] = useState(false)
-  const [previousType, setPreviousType] = useState<TransactionType>(defaultType)
 
-  // 🔥 CORREÇÃO: Não limpar campos ao trocar de tipo
+  // 🔥 CORREÇÃO: Limpar TUDO quando trocar de tipo
   const handleTypeChange = (newType: TransactionType) => {
-    setPreviousType(type)
+    resetForm()
     setType(newType)
   }
 
-  // 🔥 CORREÇÃO: Preservar valores relevantes ao trocar de tipo
   useEffect(() => {
-    if (type !== previousType) {
-      // Preserva valores que fazem sentido entre tipos
-      const preservedValues = {
-        name: formData.name,
-        date: formData.date,
-        // Para metas, preserva o valor se estiver mudando de/para goal
-        ...(type === 'goal' || previousType === 'goal' ? {
-          name: formData.name
-        } : {})
-      }
-      
-      // Atualiza o formData mantendo valores preservados
-      // Nota: Esta função precisa ser exposta pelo hook useAddTransaction
-      // Se não estiver disponível, você precisará adicionar ao hook
-      setPreviousType(type)
+    if (isOpen) {
+      resetForm()
     }
-  }, [type, previousType])
+  }, [isOpen, defaultType])
 
   if (!isOpen) return null
 
@@ -142,11 +128,12 @@ export default function AddTransactionModal({
     uniqueId: `${card.cardNumber}-${card.bank}-${index}`
   }))
 
-  // Configuração dinâmica dos campos
+  // 🔥 CORREÇÃO: Configuração dinâmica dos campos com chaves separadas
   const fieldConfig = {
     income: {
       label1: "Origem do dinheiro",
-      key1: "source",
+      key1: "source", // 🔥 Campo do select
+      titleKey: "name", // 🔥 Campo separado para o título
       icon1: <TrendingUp size={20} />,
       label2: "Valor da Receita",
       key2: "amount",
@@ -157,7 +144,8 @@ export default function AddTransactionModal({
     },
     expense: {
       label1: "Nome da Despesa", 
-      key1: "name",
+      key1: "name", // 🔥 Campo do input de texto
+      titleKey: "name", // 🔥 Mesmo campo (não tem select)
       icon1: <Wallet size={20} />,
       label2: "Valor da Despesa",
       key2: "amount",
@@ -168,7 +156,8 @@ export default function AddTransactionModal({
     },
     fixedExpense: {
       label1: "Nome da Assinatura",
-      key1: "name",
+      key1: "name", // 🔥 Campo do input de texto  
+      titleKey: "name", // 🔥 Mesmo campo (não tem select)
       icon1: <CreditCard size={20} />,
       label2: "Valor Mensal",
       key2: "amount", 
@@ -179,7 +168,8 @@ export default function AddTransactionModal({
     },
     goal: {
       label1: "Nome da Meta",
-      key1: "name",
+      key1: "name", // 🔥 Campo do input de texto
+      titleKey: "name", // 🔥 Mesmo campo
       icon1: <Target size={20} />,
       label2: "Valor da Meta",
       key2: "goalValue",
@@ -248,7 +238,7 @@ export default function AddTransactionModal({
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onClose); }} className="space-y-6">
             {/* Campos do formulário */}
             <div className="grid gap-6">
-              {/* Nome/Origem */}
+              {/* 🔥 CORREÇÃO: Input de título SEPARADO do select */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                   {cfg.icon1}
@@ -256,8 +246,8 @@ export default function AddTransactionModal({
                 </label>
                 <input
                   type="text"
-                  value={formData[cfg.key1]}
-                  onChange={(e) => handleChange(cfg.key1, e.target.value)}
+                  value={formData[cfg.titleKey]} // 🔥 Usa titleKey em vez de key1
+                  onChange={(e) => handleChange(cfg.titleKey, e.target.value)} // 🔥 titleKey
                   required
                   className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
                   placeholder={`Digite o ${cfg.label1.toLowerCase()}`}
@@ -280,15 +270,15 @@ export default function AddTransactionModal({
                 />
               </div>
 
-              {/* Select (se aplicável) */}
+              {/* Select (se aplicável) - AGORA SEPARADO do título */}
               {cfg.selectLabel && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-300">
                     {cfg.selectLabel}
                   </label>
                   <select
-                    value={formData[cfg.key1]}
-                    onChange={(e) => handleChange(cfg.key1, e.target.value)}
+                    value={formData[cfg.key1]} // 🔥 Usa key1 (campo separado)
+                    onChange={(e) => handleChange(cfg.key1, e.target.value)} // 🔥 key1
                     required
                     className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm appearance-none"
                   >

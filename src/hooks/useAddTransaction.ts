@@ -123,6 +123,23 @@ export function useAddTransaction(defaultType: TransactionType) {
     }
   }, [user?.uid, type, formData, rawAmount, rawGoalValue])
 
+      const resetForm = () => {
+        setFormData({
+          name: "",
+          category: "",
+          date: null,
+          source: "",
+          subscriptionType: "",
+          goalDeadline: null,
+          card: "",
+          installments: 1,
+        })
+        setRawAmount("")
+        setRawGoalValue("")
+        setSelectedCard(null)
+        setInstallments(1)
+      }
+   
   const transactionValue = useMemo(() => ({
     type,
     setType,
@@ -140,6 +157,7 @@ export function useAddTransaction(defaultType: TransactionType) {
     handleGoalValueChange,
     formatCurrencyForDisplay,
     handleSubmit,
+    resetForm,
   }), [
     type, loading, rawAmount, rawGoalValue, cards, selectedCard, 
     installments, formData, handleChange, handleAmountChange, 
