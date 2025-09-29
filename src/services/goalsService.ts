@@ -10,25 +10,24 @@ export async function updateGoalAmount(
   useSaldo: boolean
 ) {
   const goalRef = doc(db, "goals", goal.id)
+  const validAmount = Math.abs(amount)
   let newSavedAmount = goal.savedAmount
 
   if (type === "Add") {
-    newSavedAmount += amount
+    newSavedAmount += validAmount
     await addDoc(collection(db, "transactions"), {
       userId,
       type: useSaldo ? "expense" : "goalIncome",
-      amount,
+      amount: validAmount,
       title: `Adição à meta "${goal.goalName}"`,
       date: new Date().toISOString(),
     })
-  }
-
-  if (type === "Remove") {
-    newSavedAmount = Math.max(0, newSavedAmount - amount)
+  } else if (type === "Remove") {
+    newSavedAmount = Math.max(0, newSavedAmount - validAmount)
     await addDoc(collection(db, "transactions"), {
       userId,
       type: "income",
-      amount,
+      amount: validAmount,
       title: `Retirada da meta "${goal.goalName}"`,
       date: new Date().toISOString(),
     })

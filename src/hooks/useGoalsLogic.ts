@@ -30,7 +30,10 @@ export function useGoalsLogic() {
   // Listener das metas
   useEffect(() => {
     if (!user) return
-    const q = query(collection(db, "goals"), where("userId", "==", user.uid))
+    const q = query(
+      collection(db, "users", user.uid, "goals")
+      // não precisa do where("userId", "==", user.uid) porque já está no caminho do usuário
+    )
     const unsubscribe = onSnapshot(q, snapshot => {
       const goalsArr: Goal[] = snapshot.docs.map(docSnap => {
         const data = docSnap.data()
@@ -52,14 +55,15 @@ export function useGoalsLogic() {
   // Prioridade
   const togglePriority = async (goal: Goal) => {
     try {
+      // Desmarca outras prioridades
       const updates = goals.map(g =>
         g.id !== goal.id && g.isPriority
-          ? updateDoc(doc(db, "goals", g.id), { isPriority: false })
+          ? updateDoc(doc(db, "users", user!.uid, "goals", g.id), { isPriority: false })
           : null
-      )
+      ).filter(Boolean)
       await Promise.all(updates)
 
-      await updateDoc(doc(db, "goals", goal.id), {
+      await updateDoc(doc(db, "users", user!.uid, "goals", goal.id), {
         isPriority: !goal.isPriority,
       })
 
@@ -77,7 +81,7 @@ export function useGoalsLogic() {
   // Ativar / Desativar
   const toggleActive = async (goal: Goal) => {
     try {
-      await updateDoc(doc(db, "goals", goal.id), {
+      await updateDoc(doc(db, "users", user!.uid, "goals", goal.id), {
         isActive: !goal.isActive,
       })
       toast.success(
@@ -92,7 +96,7 @@ export function useGoalsLogic() {
   // Finalizar meta
   const finishGoal = async (goal: Goal) => {
     try {
-      await updateDoc(doc(db, "goals", goal.id), {
+      await updateDoc(doc(db, "users", user!.uid, "goals", goal.id), {
         isFinished: true,
         isActive: false
       })
@@ -107,7 +111,7 @@ export function useGoalsLogic() {
   const deleteGoal = async (goal: Goal) => {
     if (!confirm(`Deseja realmente apagar a meta "${goal.goalName}"?`)) return
     try {
-      await deleteDoc(doc(db, "goals", goal.id))
+      await deleteDoc(doc(db, "users", user!.uid, "goals", goal.id))
       toast.success("Meta removida com sucesso!")
     } catch (err) {
       console.error(err)

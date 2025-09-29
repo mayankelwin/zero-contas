@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react"
 import { useAuth } from "../hooks/useAuth"
 import { collection, getDocs } from "firebase/firestore"
 import { db } from "../lib/firebase"
-import { createTransaction } from "../services/transactionService"
+import { createTransaction } from "../services/createTransaction"
 
 export interface CardData {
   bank: string
@@ -27,7 +27,6 @@ export function useAddTransaction(defaultType: TransactionType) {
   const [loading, setLoading] = useState(false)
   const [rawAmount, setRawAmount] = useState("")
   const [rawGoalValue, setRawGoalValue] = useState("")
-  const [cards, setCards] = useState<CardData[]>([])
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null)
   const [installments, setInstallments] = useState(1)
   const [formData, setFormData] = useState({
@@ -60,21 +59,6 @@ export function useAddTransaction(defaultType: TransactionType) {
   }, [selectedCard, installments])
 
   useEffect(() => {
-    if (!user?.uid) return 
-    
-    const fetchCards = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "cards"))
-        setCards(snapshot.docs.map(doc => doc.data() as CardData))
-      } catch (error) {
-        console.error("Erro ao buscar cartões:", error)
-      }
-    }
-    
-    fetchCards()
-  }, [user?.uid])
-
-  useEffect(() => {
     setType(defaultType)
     setFormData({
       name: "",
@@ -97,24 +81,46 @@ export function useAddTransaction(defaultType: TransactionType) {
 
   const handleSubmit = useCallback(async (onClose: () => void) => {
     if (!user?.uid) return
-    
+
     setLoading(true)
 
     try {
-      await createTransaction(type, {
+      const baseData: any = {
         userId: user.uid,
-        title: type === "income" ? formData.source || "Receita" : formData.name || "Despesa",
-        amount: Number(rawAmount) / 100,
-        source: formData.source,
-        category: formData.category,
-        card: formData.card,
-        installments: formData.installments,
-        subscriptionType: formData.subscriptionType,
-        goalName: formData.name,
-        goalValue: Number(rawGoalValue) / 100,
-        goalDeadline: formData.goalDeadline?.toISOString() || null,
         date: formData.date?.toISOString() || new Date().toISOString(),
-      })
+        createdAt: new Date().toISOString(),
+        type,
+      }
+
+      if (type === "income") {
+        baseData.title = formData.source || "Receita"
+        baseData.amount = Number(rawAmount) / 100
+        baseData.category = formData.category || ""
+        baseData.source = formData.source || "Outro" 
+      }
+
+      if (type === "expense") {
+        baseData.title = formData.name || "Despesa"
+        baseData.amount = Number(rawAmount) / 100
+        baseData.category = formData.category || ""
+        baseData.card = formData.card || ""
+        baseData.installments = formData.installments || 1
+      }
+
+      if (type === "fixedExpense") {
+        baseData.title = formData.name || "Assinatura"
+        baseData.amount = Number(rawAmount) / 100
+        baseData.category = formData.subscriptionType || "Outro"
+      }
+
+      if (type === "goal") {
+        baseData.title = formData.name || "Meta"
+        baseData.goalValue = Number(rawGoalValue) / 100
+        baseData.goalDeadline = formData.goalDeadline?.toISOString() || null
+      }
+
+      await createTransaction(type, baseData)
+      resetForm()
       onClose()
     } catch (err) {
       console.error("Erro ao salvar:", err)
@@ -123,30 +129,29 @@ export function useAddTransaction(defaultType: TransactionType) {
     }
   }, [user?.uid, type, formData, rawAmount, rawGoalValue])
 
-      const resetForm = () => {
-        setFormData({
-          name: "",
-          category: "",
-          date: null,
-          source: "",
-          subscriptionType: "",
-          goalDeadline: null,
-          card: "",
-          installments: 1,
-        })
-        setRawAmount("")
-        setRawGoalValue("")
-        setSelectedCard(null)
-        setInstallments(1)
-      }
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      category: "",
+      date: null,
+      source: "",
+      subscriptionType: "",
+      goalDeadline: null,
+      card: "",
+      installments: 1,
+    })
+    setRawAmount("")
+    setRawGoalValue("")
+    setSelectedCard(null)
+    setInstallments(1)
+  }
    
-  const transactionValue = useMemo(() => ({
+ const transactionValue = useMemo(() => ({
     type,
     setType,
     loading,
     rawAmount,
     rawGoalValue,
-    cards,
     selectedCard,
     setSelectedCard,
     installments,
@@ -159,7 +164,7 @@ export function useAddTransaction(defaultType: TransactionType) {
     handleSubmit,
     resetForm,
   }), [
-    type, loading, rawAmount, rawGoalValue, cards, selectedCard, 
+    type, loading, rawAmount, rawGoalValue, selectedCard, 
     installments, formData, handleChange, handleAmountChange, 
     handleGoalValueChange, formatCurrencyForDisplay, handleSubmit
   ])

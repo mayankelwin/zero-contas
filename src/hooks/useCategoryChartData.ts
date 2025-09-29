@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../hooks/useAuth"
-import { collection, query, where, onSnapshot } from "firebase/firestore"
+import { collection, query, onSnapshot } from "firebase/firestore"
 import { db } from "../lib/firebase"
 
 interface ChartData {
@@ -22,11 +22,20 @@ export function useCategoryChartData() {
   useEffect(() => {
     if (!user) return
 
-    const q = query(collection(db, "transactions"), where("userId", "==", user.uid))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const incomeMap: Record<string, number> = {}
-      const expenseMap: Record<string, number> = {}
-      const subscriptionMap: Record<string, number> = {}
+    // Queries para cada coleção dentro do usuário
+    const transactionsQuery = collection(db, "users", user.uid, "transactions")
+    const subscriptionsQuery = collection(db, "users", user.uid, "subscriptions")
+
+    // Mapas para armazenar os valores agregados
+    const incomeMap: Record<string, number> = {}
+    const expenseMap: Record<string, number> = {}
+    const subscriptionMap: Record<string, number> = {}
+
+    // Subscrever transações
+    const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
+      // Limpar mapas antes de agregar
+      Object.keys(incomeMap).forEach(key => delete incomeMap[key])
+      Object.keys(expenseMap).forEach(key => delete expenseMap[key])
 
       snapshot.forEach((doc) => {
         const data = doc.data()
@@ -39,13 +48,29 @@ export function useCategoryChartData() {
           case "expense":
             expenseMap[data.category ?? "Outros"] = (expenseMap[data.category ?? "Outros"] || 0) + amount
             break
-          case "subscription":
-            subscriptionMap[data.subscriptionName ?? "Outros"] = (subscriptionMap[data.subscriptionName ?? "Outros"] || 0) + amount
-            break
         }
       })
 
-      // Transformar em arrays para o chart
+      // Atualizar gráfico depois de agregar e juntar dados das assinaturas (se já carregadas)
+      updateChart()
+    })
+
+    // Subscrever assinaturas
+    const unsubscribeSubscriptions = onSnapshot(subscriptionsQuery, (snapshot) => {
+      // Limpar mapa antes de agregar
+      Object.keys(subscriptionMap).forEach(key => delete subscriptionMap[key])
+
+      snapshot.forEach((doc) => {
+        const data = doc.data()
+        const amount = Number(data.value ?? 0)
+        subscriptionMap[data.subscriptionName ?? "Outros"] = (subscriptionMap[data.subscriptionName ?? "Outros"] || 0) + amount
+      })
+
+      updateChart()
+    })
+
+    // Função para atualizar os dados do gráfico juntando tudo
+    function updateChart() {
       const labels = [
         ...Object.keys(incomeMap),
         ...Object.keys(expenseMap),
@@ -74,9 +99,12 @@ export function useCategoryChartData() {
           },
         ],
       })
-    })
+    }
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribeTransactions()
+      unsubscribeSubscriptions()
+    }
   }, [user])
 
   return chartData

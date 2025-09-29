@@ -8,9 +8,9 @@ export function useFavoriteGoal(userId?: string) {
 
   useEffect(() => {
     if (!userId) return
+
     const q = query(
-      collection(db, "goals"),
-      where("userId", "==", userId),
+      collection(db, "users", userId, "goals"), // acessar goals dentro do usuário
       where("isPriority", "==", true)
     )
 

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { login, register, loginWithGoogle } from "./../lib/auth"
 import { getAuth, onAuthStateChanged, User } from "firebase/auth"
+import { createUserProfile } from "../lib/createUserProfile"
 
 export type AuthMode = "login" | "register"
 
@@ -47,10 +48,12 @@ export const useAuth = () => {
 
     try {
       let userCredential = null
-      if (mode === "login") {
-        userCredential = await login(form.email, form.password)
-      } else {
+
+      if (mode === "register") {
         userCredential = await register(form.email, form.password, form.username)
+        if (userCredential) {
+          await createUserProfile(userCredential, form.username)
+        }
       }
 
       if (userCredential) {
@@ -59,13 +62,13 @@ export const useAuth = () => {
 
       return userCredential
     } catch (err: any) {
-      setError(err.message || "Ocorreu um erro")
-      console.error(err)
-      return null
-    } finally {
-      setLoading(false)
+        setError(err.message || "Ocorreu um erro")
+        console.error(err)
+        return null
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
   const handleGoogleAuth = async () => {
     setLoading(true)
@@ -74,7 +77,8 @@ export const useAuth = () => {
     try {
       const userCredential = await loginWithGoogle()
 
-      if (userCredential) {
+     if (userCredential) {
+        await createUserProfile(userCredential)
         router.push("/home")
       }
 

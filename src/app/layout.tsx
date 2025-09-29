@@ -9,7 +9,7 @@ const montserrat = Montserrat({
 })
 
 export const metadata = {
-  title: "Seu SaaS Financeiro",
+  title: "Zero Contas",
   description: "Gerencie sua vida financeira com metas, gastos e controle.",
 }
 
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={`${montserrat.variable}`}>
       <body className="relative">
         {/* Faixa de homologação */}
-        <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center py-2 font-semibold z-50 shadow-md">
+        <div className="fixed top-0 left-0 w-full bg-red-600 opacity-50 text-white text-center py-2 font-semibold z-100 shadow-md">
            Ambiente de Homologação - Apenas para testes 
         </div>
 

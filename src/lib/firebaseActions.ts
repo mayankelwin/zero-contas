@@ -1,5 +1,14 @@
-import { addDoc, updateDoc, doc, collection, Query, getDocs, QuerySnapshot, DocumentData } from "firebase/firestore"
+import { addDoc, updateDoc, doc, collection, query, where, getDocs, QuerySnapshot, DocumentData, Query } from "firebase/firestore"
 import { db } from "./firebase"
+
+/* Utilitário para extrair data */
+function extractDate(dateField: any): string | undefined {
+  if (!dateField) return undefined
+  if (typeof dateField.toDate === "function") {
+    return dateField.toDate().toISOString()
+  }
+  return typeof dateField === "string" ? dateField : undefined
+}
 
 /* Tipos principais */
 export type TransactionType = "income" | "expense" | "subscription" | "goal"
@@ -43,20 +52,18 @@ export interface AllTransactions {
   goals: TransactionData[]
 }
 
+/* Consulta filtrada no Firestore pelo userId */
 export async function getAllTransactionsByType(userId: string): Promise<AllTransactions> {
   try {
-    const q = collection(db, "transactions")
+    const q = query(collection(db, "transactions"), where("userId", "==", userId))
     const snapshot = await getDocs(q)
-
-    const allData = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((item) => item.userId === userId)
 
     const transactions: TransactionData[] = []
     const subscriptions: SubscriptionItem[] = []
     const goals: TransactionData[] = []
 
-    allData.forEach((item: any) => {
+    snapshot.docs.forEach(docSnap => {
+      const item = docSnap.data()
       switch (item.type) {
         case "income":
         case "expense":
@@ -65,16 +72,16 @@ export async function getAllTransactionsByType(userId: string): Promise<AllTrans
             userId: item.userId,
             amount: item.amount,
             category: item.category,
-            date: item.createdAt?.toDate ? item.createdAt.toDate().toISOString() : item.createdAt,
+            date: extractDate(item.createdAt),
           })
           break
         case "subscription":
           subscriptions.push({
-            id: item.id,
+            id: docSnap.id,
             name: item.subscriptionName,
             value: item.amount,
             subscriptionType: item.subscriptionType,
-            nextBilling: item.createdAt?.toDate ? item.createdAt.toDate().toISOString() : item.createdAt,
+            nextBilling: extractDate(item.createdAt) || "",
           })
           break
         case "goal":
@@ -83,7 +90,7 @@ export async function getAllTransactionsByType(userId: string): Promise<AllTrans
             userId: item.userId,
             goalName: item.goalName,
             goalValue: item.goalValue,
-            goalDeadline: item.goalDeadline?.toDate ? item.goalDeadline.toDate().toISOString() : item.goalDeadline,
+            goalDeadline: extractDate(item.goalDeadline),
           })
           break
       }
@@ -96,24 +103,24 @@ export async function getAllTransactionsByType(userId: string): Promise<AllTrans
   }
 }
 
-/* --- Funções já existentes --- */
-export async function saveTransactionItem(query: Query, item: TransactionItem) {
+/* Salvar transação genérica */
+export async function saveTransactionItem(collectionRef: ReturnType<typeof collection>, item: TransactionItem) {
   const payload = { title: item.title, amount: item.value, type: item.type, date: item.date }
   if (item.id) {
-    const docRef = doc(db, query.path, item.id)
+    const docRef = doc(collectionRef.path, item.id)
     await updateDoc(docRef, payload)
   } else {
-    await addDoc(query, payload)
+    await addDoc(collectionRef, payload)
   }
 }
 
-export async function saveSubscriptionItem(query: Query, item: SubscriptionItem) {
+export async function saveSubscriptionItem(collectionRef: ReturnType<typeof collection>, item: SubscriptionItem) {
   const payload = { name: item.name, value: item.value, subscriptionType: item.subscriptionType, nextBilling: item.nextBilling }
   if (item.id) {
-    const docRef = doc(db, query.path, item.id)
+    const docRef = doc(collectionRef.path, item.id)
     await updateDoc(docRef, payload)
   } else {
-    await addDoc(query, payload)
+    await addDoc(collectionRef, payload)
   }
 }
 
@@ -127,7 +134,7 @@ export async function saveTransactionFirebase(data: TransactionData) {
       if (data.date) payload.createdAt = new Date(data.date)
       break
     case "subscription":
-      payload.type = "expense"
+      payload.type = "expense" // cuidado aqui, talvez queira manter "subscription"?
       payload.amount = Number(data.amount)
       payload.subscriptionName = data.subscriptionName
       payload.subscriptionType = data.subscriptionType
@@ -142,16 +149,13 @@ export async function saveTransactionFirebase(data: TransactionData) {
   return await addDoc(collection(db, "transactions"), payload)
 }
 
-/* --- NOVA FUNÇÃO: BUSCAR TODOS OS DADOS --- */
+/* Nova função para buscar todas as transações */
 export async function getAllTransactions(userId: string) {
   try {
-    const q = collection(db, "transactions")
+    const q = query(collection(db, "transactions"), where("userId", "==", userId))
     const snapshot: QuerySnapshot<DocumentData> = await getDocs(q)
 
-    const allData = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((item) => item.userId === userId) // filtra pelo usuário se necessário
-
+    const allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     return allData
   } catch (err) {
     console.error("Erro ao buscar todas as transações:", err)

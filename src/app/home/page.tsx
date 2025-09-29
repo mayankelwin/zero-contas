@@ -5,15 +5,13 @@ import Sidebar from "@/src/components/layout/Sidebar"
 import DashboardSummary from "@/src/components/DashboardSummary"
 import ChartCard from "@/src/components/ChartCard"
 import AddTransactionModal from "@/src/components/AddTransactionModal"
-import AddButton from "@/src/components/AddButton"
-import AddButtonMenu from "@/src/components/ButtonMenu"
-import CardGlobal from "@/src/components/CardComponent"
+import CardGlobal from "@/src/components/TransactionsCards"
 
 import { collection, query, where } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
 import { useHomeLogic } from "./useHomeLogic"
 import { getTransactionIcon, getSubscriptionIcon } from "@/src/utils/icons"
-import { formatCurrency } from "@/src/utils/formatCurrency"
+import AddButtonWithMenu from "@/src/components/AddButton"
 
 export default function HomePage() {
   const {
@@ -44,6 +42,7 @@ export default function HomePage() {
 
         <div className="p-6 space-y-6">
           {/* Resumo */}
+          <h2 className="text-2xl font-semibold text-white">Bem vindo, {user.displayName}!</h2>
           <DashboardSummary reloadFlag={reloadFlag} />
 
           <div className="flex justify-end mb-4">
@@ -65,7 +64,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CardGlobal
               title="Transações Recentes"
-              firebaseQuery={query(collection(db, "transactions"), where("userId", "==", user.uid))}
+              firebaseQuery={collection(db, "users", user.uid, "transactions")}
               getIcon={getTransactionIcon} 
               reloadFlag={reloadFlag}
             />
@@ -73,7 +72,7 @@ export default function HomePage() {
             <CardGlobal
               cardType="subscription"
               title="Despesas fixas"
-              firebaseQuery={query(collection(db, "subscriptions"), where("userId", "==", user.uid))}
+              firebaseQuery={collection(db, "users", user.uid, "subscriptions")}
               getIcon={getSubscriptionIcon}
               reloadFlag={reloadFlag}
             />
@@ -82,13 +81,7 @@ export default function HomePage() {
 
         {/* Botão flutuante */}
         <div className="fixed bottom-8 right-8">
-          <AddButton onClick={() => setIsMenuOpen((prev) => !prev)} />
-          {isMenuOpen && (
-            <AddButtonMenu
-              onSelect={handleSelectType}
-              onClose={() => setIsMenuOpen(false)}
-            />
-          )}
+          <AddButtonWithMenu onSelect={handleSelectType} />
         </div>
 
         {/* Modal */}

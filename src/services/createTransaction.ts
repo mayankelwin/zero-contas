@@ -1,5 +1,5 @@
 import { db } from "@/src/lib/firebase"
-import { addDoc, collection } from "firebase/firestore"
+import { addDoc, collection, DocumentReference } from "firebase/firestore"
 
 export type TransactionKind = "balance" | "income" | "expense" | "fixedExpense" | "goal"
 
@@ -36,37 +36,65 @@ interface GoalData extends CommonData {
 
 type TransactionData = BalanceData | ExpenseData | FixedExpenseData | GoalData | IncomeData
 
-export async function createTransaction(type: TransactionKind, formData: TransactionData) {
-  const base = {
-    userId: formData.userId,
-    createdAt: new Date().toISOString(),
+function validateData(type: TransactionKind, data: TransactionData) {
+  if (!data.userId) throw new Error("userId é obrigatório")
+  if (["balance", "income", "expense", "fixedExpense"].includes(type) && (data.amount === undefined || data.amount === null)) {
+    throw new Error("amount é obrigatório para esse tipo de transação")
   }
 
   switch (type) {
     case "balance":
-      return addDoc(collection(db, "transactions"), {
+    case "income":
+      if (!("source" in data)) throw new Error("source é obrigatório para balance/income")
+      break
+    case "expense":
+      if (!("category" in data)) throw new Error("category é obrigatório para expense")
+      break
+    case "fixedExpense":
+      if (!("subscriptionType" in data)) throw new Error("subscriptionType é obrigatório para fixedExpense")
+      break
+    case "goal":
+      if (!("goalName" in data) || !("goalValue" in data)) throw new Error("goalName e goalValue são obrigatórios para goal")
+      break
+  }
+}
+
+export async function createTransaction(type: TransactionKind, formData: TransactionData): Promise<DocumentReference> {
+  validateData(type, formData)
+
+  const { userId } = formData
+  const base = {
+    createdAt: new Date().toISOString(),
+    userId,
+  }
+
+  const userTransactionsRef = (sub: string) => collection(db, "users", userId, sub)
+
+  switch (type) {
+    case "balance":
+      return addDoc(userTransactionsRef("transactions"), {
         ...base,
         type: "balance",
         title: formData.title,
         amount: formData.amount,
-        category: (formData as ExpenseData).category,
         source: (formData as BalanceData).source,
+        category: "Salario",
         date: formData.date,
       })
 
     case "income":
-      return addDoc(collection(db, "transactions"), {
+      return addDoc(userTransactionsRef("transactions"), {
         ...base,
         type: "income",
         title: formData.title,
         amount: formData.amount,
-        category: (formData as ExpenseData).category,
         source: (formData as IncomeData).source,
+        category: (formData as any).category,
         date: formData.date,
       })
 
     case "expense":
-      return addDoc(collection(db, "transactions"), {
+      return addDoc(userTransactionsRef("transactions"), {
         ...base,
         type: "expense",
         title: formData.title,
@@ -78,7 +106,7 @@ export async function createTransaction(type: TransactionKind, formData: Transac
       })
 
     case "fixedExpense":
-      return addDoc(collection(db, "transactions"), {
+      return addDoc(userTransactionsRef("transactions"), {
         ...base,
         type: "fixedExpense",
         title: formData.title,
@@ -88,7 +116,7 @@ export async function createTransaction(type: TransactionKind, formData: Transac
       })
 
     case "goal":
-      return addDoc(collection(db, "goals"), {
+      return addDoc(userTransactionsRef("goals"), {
         ...base,
         goalName: (formData as GoalData).goalName,
         goalValue: (formData as GoalData).goalValue,

@@ -36,6 +36,10 @@ export function useHomeLogic() {
   const handleSelectType = useCallback((type: "income" | "expense") => {
     setTransactionType(type)
     setIsModalOpen(true)
+     setTimeout(() => {
+    setIsMenuOpen(false)
+    setIsModalOpen(true)
+  }, 100) 
   }, [])
 
   const handleCloseModal = useCallback(() => {
@@ -47,9 +51,9 @@ export function useHomeLogic() {
     useEffect(() => {
     if (!user) return
 
-    const transactionsQuery = query(collection(db, "transactions"), where("userId", "==", user.uid))
-    const subscriptionsQuery = query(collection(db, "subscriptions"), where("userId", "==", user.uid))
-    const goalsQuery = query(collection(db, "goals"), where("userId", "==", user.uid))
+    const transactionsQuery = collection(db, "users", user.uid, "transactions")
+    const subscriptionsQuery = collection(db, "users", user.uid, "subscriptions")
+    const goalsQuery = collection(db, "users", user.uid, "goals")
 
     
     // Transações normais

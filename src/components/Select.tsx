@@ -24,7 +24,7 @@ interface SelectProps {
   searchable?: boolean
 }
 
-export function Select({ 
+export function SelectComponent({ 
   label, 
   value, 
   onChange, 

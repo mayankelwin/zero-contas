@@ -8,6 +8,7 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import AddCardModal from "./AddCardModal"
 import { useAddTransaction } from "../hooks/useAddTransaction"
+import { useCreateCard } from "../services/createCard"
 
 type TransactionType = "income" | "expense" | "fixedExpense" | "goal"
 
@@ -87,11 +88,7 @@ export default function AddTransactionModal({
     loading,
     rawAmount,
     rawGoalValue,
-    cards,
-    selectedCard,
-    setSelectedCard,
-    installments,
-    setInstallments,
+    
     formData,
     handleChange,
     handleAmountChange,
@@ -100,10 +97,23 @@ export default function AddTransactionModal({
     handleSubmit,
     resetForm
   } = useAddTransaction(defaultType)
+  
+  const {
+    cardsList,
+    handleAddCard,
+    handleEditCard,
+    handleUpdateCard,
+    handleDeleteCard,
+    setAddCardOpen,
+    setSelectedCard,
+    selectedCard,
+    installments,
+    setInstallments,
+    addCardOpen,
+  } = useCreateCard()
 
   const [isCardModalOpen, setIsCardModalOpen] = useState(false)
-
-  // 🔥 CORREÇÃO: Limpar TUDO quando trocar de tipo
+  // Limpar TUDO quando trocar de tipo
   const handleTypeChange = (newType: TransactionType) => {
     resetForm()
     setType(newType)
@@ -117,23 +127,24 @@ export default function AddTransactionModal({
 
   if (!isOpen) return null
 
-  // 🔥 NOVO: Filtrar tipos permitidos
+  // Filtrar tipos permitidos
   const availableTypes = allowedTypes === "ALL_TYPES" 
     ? typeDisplayConfig 
     : typeDisplayConfig.filter(t => allowedTypes.includes(t.key as TransactionType))
 
-  // 🔧 CORREÇÃO: Criar IDs únicos para os cartões
-  const cardsWithUniqueIds = cards.map((card, index) => ({
-    ...card,
-    uniqueId: `${card.cardNumber}-${card.bank}-${index}`
-  }))
+  // Criar IDs únicos para os cartões
+  const cardsWithUniqueIds = cardsList.map((card, index) => ({
+      ...card,
+      uniqueId: `${card.cardNumber}-${card.bank}-${index}`
+    }))
 
-  // 🔥 CORREÇÃO: Configuração dinâmica dos campos com chaves separadas
+  // Configuração dinâmica dos campos com chaves separadas
   const fieldConfig = {
     income: {
       label1: "Origem do dinheiro",
-      key1: "source", // 🔥 Campo do select
-      titleKey: "name", // 🔥 Campo separado para o título
+      key1: "source", 
+      titleKey: "source",
+      categoryKey: "category", 
       icon1: <TrendingUp size={20} />,
       label2: "Valor da Receita",
       key2: "amount",
@@ -142,10 +153,11 @@ export default function AddTransactionModal({
       selectOptions: incomeSources,
       placeholder: "Selecione a categoria",
     },
-    expense: {
+   expense: {
       label1: "Nome da Despesa", 
-      key1: "name", // 🔥 Campo do input de texto
-      titleKey: "name", // 🔥 Mesmo campo (não tem select)
+      key1: "title",      
+      titleKey: "title",   
+      categoryKey: "category", 
       icon1: <Wallet size={20} />,
       label2: "Valor da Despesa",
       key2: "amount",
@@ -156,8 +168,9 @@ export default function AddTransactionModal({
     },
     fixedExpense: {
       label1: "Nome da Assinatura",
-      key1: "name", // 🔥 Campo do input de texto  
-      titleKey: "name", // 🔥 Mesmo campo (não tem select)
+      key1: "name",  
+      titleKey: "name", 
+      categoryKey: "category",
       icon1: <CreditCard size={20} />,
       label2: "Valor Mensal",
       key2: "amount", 
@@ -168,8 +181,8 @@ export default function AddTransactionModal({
     },
     goal: {
       label1: "Nome da Meta",
-      key1: "name", // 🔥 Campo do input de texto
-      titleKey: "name", // 🔥 Mesmo campo
+      key1: "name", 
+      titleKey: "name",
       icon1: <Target size={20} />,
       label2: "Valor da Meta",
       key2: "goalValue",
@@ -180,7 +193,21 @@ export default function AddTransactionModal({
     },
   }
 
-  const cfg = fieldConfig[type]
+const amountNumber = Number(rawAmount.toString().replace(/[^0-9.-]+/g,"")) / 100 || 0
+const numInstallments = installments > 0 ? installments : 1
+const monthlyInterestRate = selectedCard?.interestRate ? selectedCard.interestRate / 100 : 0
+
+function calculateTotalWithInterest(principal: number, months: number, monthlyRate: number) {
+  if(monthlyRate === 0) return principal;
+  return principal * (Math.pow(1 + monthlyRate, months));
+}
+
+const totalWithInterest = calculateTotalWithInterest(amountNumber, numInstallments, monthlyInterestRate)
+const installmentValue = totalWithInterest / numInstallments
+const interestPaid = totalWithInterest - amountNumber
+
+
+ const cfg = fieldConfig[type] ?? fieldConfig.income; 
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fadeIn">
@@ -238,16 +265,18 @@ export default function AddTransactionModal({
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onClose); }} className="space-y-6">
             {/* Campos do formulário */}
             <div className="grid gap-6">
-              {/* 🔥 CORREÇÃO: Input de título SEPARADO do select */}
+              {/* Input */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  {cfg.icon1}
-                  {cfg.label1}
-                </label>
+                {cfg && (
+                  <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    {cfg.icon1}
+                    {cfg.label1}
+                  </label>
+                )}
                 <input
                   type="text"
-                  value={formData[cfg.titleKey]} // 🔥 Usa titleKey em vez de key1
-                  onChange={(e) => handleChange(cfg.titleKey, e.target.value)} // 🔥 titleKey
+                  value={formData[cfg.titleKey] || ""}
+                  onChange={(e) => handleChange(cfg.titleKey, e.target.value)} 
                   required
                   className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
                   placeholder={`Digite o ${cfg.label1.toLowerCase()}`}
@@ -270,17 +299,17 @@ export default function AddTransactionModal({
                 />
               </div>
 
-              {/* Select (se aplicável) - AGORA SEPARADO do título */}
-              {cfg.selectLabel && (
+             {/* Select (se aplicável) - AGORA SEPARADO do título */}
+              {cfg.selectLabel && cfg.selectOptions?.length > 0 && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-300">
                     {cfg.selectLabel}
                   </label>
                   <select
-                    value={formData[cfg.key1]} // 🔥 Usa key1 (campo separado)
-                    onChange={(e) => handleChange(cfg.key1, e.target.value)} // 🔥 key1
+                    value={formData[cfg.categoryKey || cfg.key1]}
+                    onChange={(e) => handleChange(cfg.categoryKey || cfg.key1, e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm appearance-none"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm appearance-none"
                   >
                     <option value="">{cfg.placeholder}</option>
                     {cfg.selectOptions.map(option => (
@@ -303,25 +332,25 @@ export default function AddTransactionModal({
                   onChange={(date) => handleChange(cfg.dateKey, date)}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Selecione a data"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
                   required
                 />
               </div>
 
               {/* Cartão e Parcelas (apenas para despesas) */}
               {type === "expense" && (
-                <div className="space-y-4 p-4 bg-gray-800/30 rounded-2xl border border-gray-700/50">
+                <div className="space-y-4 ">
                   <label className="text-sm font-medium text-gray-300">💳 Cartão de Crédito</label>
                   
                   <div className="flex gap-3">
-                    <select
-                      value={selectedCard?.cardNumber || ""}
+                   <select
+                      value={selectedCard?.uniqueId || ""}
                       onChange={(e) => {
                         const selected = cardsWithUniqueIds.find(c => c.uniqueId === e.target.value)
                         setSelectedCard(selected || null)
                       }}
-                      className="flex-1 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                    >
+                       className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm appearance-none"
+                      >
                       <option value="">Selecione um cartão</option>
                       {cardsWithUniqueIds.map(card => (
                         <option key={card.uniqueId} value={card.uniqueId}>
@@ -329,6 +358,7 @@ export default function AddTransactionModal({
                         </option>
                       ))}
                     </select>
+
                     
                     <button
                       type="button"
@@ -343,7 +373,7 @@ export default function AddTransactionModal({
                   {selectedCard && (
                     <div className="flex items-center gap-4">
                       <label className="text-sm font-medium text-gray-300 flex-1">
-                        📦 Parcelas
+                        Parcelas
                       </label>
                       <input
                         type="number"
@@ -355,8 +385,26 @@ export default function AddTransactionModal({
                       />
                     </div>
                   )}
+
+                  {/* Logo após seleção do cartão e parcelas */}
+                  {selectedCard && installments > 1 && (
+                    <div className="mt-4 p-4 border rounded-lg bg-gray-900 text-white">
+                      <h3 className="font-semibold mb-2">Detalhes:</h3>
+                      <p>{formData.title || formData.name || "Descrição da despesa"}</p>
+                      <p>R$ {formatCurrencyForDisplay(rawAmount)}</p>
+                      <p>Parcelado em {installments}x</p>
+                      <p>Valor das parcelas: R$ {formatCurrencyForDisplay(rawAmount / installments)}</p>
+                      <p>
+                        Valor estimado do juros do cartão ({selectedCard.interestRate}% ao mês): R${" "}
+                        {formatCurrencyForDisplay(
+                          rawAmount * (Math.pow(1 + selectedCard.interestRate / 100, installments) - 1)
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
+              
             </div>
 
             {/* Ações */}
@@ -393,11 +441,15 @@ export default function AddTransactionModal({
         <AddCardModal
           isOpen={isCardModalOpen}
           onClose={() => setIsCardModalOpen(false)}
-          onSubmit={(newCard) => {
-            setSelectedCard(newCard)
-            setIsCardModalOpen(false)
+          onSubmit={async (cardData) => {
+            const createdCard = await handleAddCard(cardData)
+            if (createdCard) {
+              setSelectedCard(createdCard)
+              setIsCardModalOpen(false)
+            }
           }}
         />
+
       </div>
     </div>
   )
