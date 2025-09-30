@@ -49,7 +49,10 @@ export const useAuth = () => {
     try {
       let userCredential = null
 
-      if (mode === "register") {
+      if (mode === "login") {
+        // 🔥 CORREÇÃO: Adicionar o login que estava faltando
+        userCredential = await login(form.email, form.password)
+      } else {
         userCredential = await register(form.email, form.password, form.username)
         if (userCredential) {
           await createUserProfile(userCredential, form.username)
@@ -62,13 +65,13 @@ export const useAuth = () => {
 
       return userCredential
     } catch (err: any) {
-        setError(err.message || "Ocorreu um erro")
-        console.error(err)
-        return null
-      } finally {
-        setLoading(false)
-      }
+      setError(err.message || "Ocorreu um erro")
+      console.error(err)
+      return null
+    } finally {
+      setLoading(false)
     }
+  }
 
   const handleGoogleAuth = async () => {
     setLoading(true)
@@ -77,7 +80,7 @@ export const useAuth = () => {
     try {
       const userCredential = await loginWithGoogle()
 
-     if (userCredential) {
+      if (userCredential) {
         await createUserProfile(userCredential)
         router.push("/home")
       }

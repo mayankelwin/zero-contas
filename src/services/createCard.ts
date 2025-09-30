@@ -101,7 +101,10 @@ export function useCreateCard() {
       toast.error("Erro ao excluir o cartão")
     }
   }
-
+  const resetCardSelection = () => {
+    setSelectedCard(null)
+    setInstallments(1)
+  }
   return {
     addCardOpen,
     selectedCardId,
@@ -120,5 +123,6 @@ export function useCreateCard() {
     handleEditCard,
     handleUpdateCard,
     handleDeleteCard,
+    resetCardSelection,
   }
 }

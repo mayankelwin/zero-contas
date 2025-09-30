@@ -55,7 +55,7 @@ export default function CardsCarousel({
       {/* Lista de cartões */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-6 pb-8 overflow-x-auto container-cartoes hide-scrollbar cursor-grab active:cursor-grabbing"
+        className="flex gap-6 pb-8 overflow-x-auto container-cartoes hide-scrollbar cursor-grab active:cursor-grabbing p-6"
         tabIndex={0}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -67,8 +67,8 @@ export default function CardsCarousel({
             key={card.id}
             onClick={() => handleCardClick(card.id)}
             onMouseUp={(e) => handleMouseUp(e, card.id)}
-            className="cursor-pointer transform transition-all duration-500 hover:scale-80 hover:-translate-y-2 group relative flex-shrink-0 select-none"
-            style={{ padding: "8px" }}
+            className="cursor-pointer transform transition-all duration-500 hover:scale-90 group relative flex-shrink-0 select-none "
+            style={{ padding: "4px" }}
           >
             <div className="relative">
               <CardItem {...card} index={index} />

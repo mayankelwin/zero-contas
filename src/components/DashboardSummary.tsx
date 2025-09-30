@@ -40,7 +40,7 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
     <>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
         <SummaryCards cards={InfosResume} />
         <CardsSection
           cardsList={cardsList}

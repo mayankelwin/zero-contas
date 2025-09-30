@@ -31,6 +31,12 @@ export default function CardsSection({
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
+  useEffect(() => {
+    if (isMobile && !selectedCardId && cardsList.length > 0) {
+      setSelectedCardId(cardsList[0].id)
+    }
+  }, [isMobile, selectedCardId, cardsList, setSelectedCardId])
+
   const {
     searchTerm,
     setSearchTerm,

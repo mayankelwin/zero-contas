@@ -110,11 +110,12 @@ export function useAddTransaction(defaultType: TransactionType) {
       if (type === "fixedExpense") {
         baseData.title = formData.name || "Assinatura"
         baseData.amount = Number(rawAmount) / 100
-        baseData.category = formData.subscriptionType || "Outro"
+        baseData.subscriptionType = formData.subscriptionType || "Outro"
+        baseData.category = formData.category || ""
       }
 
-      if (type === "goal") {
-        baseData.title = formData.name || "Meta"
+     if (type === "goal") {
+        baseData.goalName = formData.name || "Meta"
         baseData.goalValue = Number(rawGoalValue) / 100
         baseData.goalDeadline = formData.goalDeadline?.toISOString() || null
       }
@@ -129,21 +130,26 @@ export function useAddTransaction(defaultType: TransactionType) {
     }
   }, [user?.uid, type, formData, rawAmount, rawGoalValue])
 
+  useEffect(() => {
+    setType(defaultType)
+    resetForm() 
+  }, [defaultType])
+
   const resetForm = () => {
     setFormData({
       name: "",
       category: "",
       date: null,
       source: "",
-      subscriptionType: "",
+      subscriptionType: "", 
       goalDeadline: null,
       card: "",
       installments: 1,
     })
     setRawAmount("")
     setRawGoalValue("")
-    setSelectedCard(null)
-    setInstallments(1)
+    setSelectedCard(null) 
+    setInstallments(1) 
   }
    
  const transactionValue = useMemo(() => ({
