@@ -12,6 +12,7 @@ import { db } from "@/src/lib/firebase"
 import { useHomeLogic } from "./useHomeLogic"
 import { getTransactionIcon, getSubscriptionIcon } from "@/src/utils/icons"
 import AddButtonWithMenu from "@/src/components/AddButton"
+import { LoadingPage } from "@/src/components/Loading"
 
 export default function HomePage() {
   const {
@@ -29,9 +30,7 @@ export default function HomePage() {
     handleDeleteAllData,
   } = useHomeLogic()
 
-  if (loading || !user) {
-    return <div className="p-8">Carregando...</div>
-  }
+ if (loading || !user) return <LoadingPage />
 
   return (
     <div className="flex h-screen">

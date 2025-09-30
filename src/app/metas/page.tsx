@@ -7,6 +7,7 @@ import { useGoalsLogic } from "@/src/hooks/useGoalsLogic"
 import { useState, useMemo } from "react"
 import dayjs from "dayjs"
 import AddTransactionModal from "@/src/components/AddTransactionModal"
+import { LoadingPage } from "@/src/components/Loading"
 
 export default function MetasScreen() {
   const { user, loading, goals, togglePriority, deleteGoal, toggleActive, finishGoal, router } =
@@ -52,7 +53,7 @@ export default function MetasScreen() {
     return sorted
   }, [filteredGoals, sortType])
 
-  if (loading || !user) return <div className="p-8">Carregando...</div>
+ if (loading || !user) return <LoadingPage />
 
   return (
     <div className="flex h-screen bg-[#1A1A1A]">
