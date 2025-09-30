@@ -5,11 +5,12 @@ import Sidebar from "@/src/components/layout/Sidebar"
 import { LoadingPage } from "@/src/components/Loading"
 import CustomerModal, { useCustomerModal } from "@/src/components/CustomerModal"
 import { useHomeLogic } from "../home/useHomeLogic"
-import { useInfosGeral } from "@/src/hooks/useInfosGeral"
+import { useInfosGeral } from "@/src/hooks/transactions/useInfosGeral"
 import { useEffect, useState } from "react"
 import { Edit3, Mail, MapPin, Briefcase, Calendar, DollarSign, PieChart, Target, CreditCard, User } from "lucide-react"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
+import { formatCurrency } from "@/src/utils/formatCurrency"
 
 // Dados de exemplo para modal
 const exampleCustomer = {
@@ -24,8 +25,14 @@ const exampleCustomer = {
 }
 
 export default function PerfilPage() {
-   const { user, loading } = useHomeLogic()
-  const { balance, expanse, expensefixes, goals, subcriptions } = useInfosGeral()
+  const { user, loading } = useHomeLogic()
+    const {
+    balance,
+    summary,
+    goals,
+    subcriptions
+  } = useInfosGeral()
+
   const { isModalOpen, openModal, closeModal } = useCustomerModal()
 
   const [userProfile, setUserProfile] = useState<any>(null)
@@ -68,7 +75,7 @@ export default function PerfilPage() {
 
   if (loading || !user || !userProfile) return <LoadingPage />
 
-  const totalExpenses = expanse + expensefixes
+  const totalExpenses = summary.expenses + summary.fixedExpenses
   const netBalance = balance - totalExpenses
   const savingsRate = balance > 0 ? ((balance - totalExpenses) / balance) * 100 : 0
 
@@ -129,28 +136,6 @@ export default function PerfilPage() {
                   Editar Perfil
                 </button>
               </div>
-
-              {/* Estatísticas */}
-              <div className="bg-[#1E1F24] rounded-3xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
-                  <Target className="text-green-400" size={20} />
-                  Estatísticas
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl">
-                    <span className="text-gray-300">Projetos Concluídos</span>
-                    <span className="text-green-400 font-bold text-lg">{userProfile.stats.completed}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl">
-                    <span className="text-gray-300">Projetos em Andamento</span>
-                    <span className="text-blue-400 font-bold text-lg">{userProfile.stats.inProgress}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl">
-                    <span className="text-gray-300">Membro desde</span>
-                    <span className="text-yellow-400 font-bold text-lg">{userProfile.joinDate}</span>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Coluna Central - Informações Profissionais */}
@@ -173,28 +158,6 @@ export default function PerfilPage() {
                   <InfoItem icon={Calendar} label="Membro desde" value={userProfile.joinDate} />
                 </div>
               </div>
-
-              {/* Habilidades */}
-              <div className="bg-[#1E1F24] rounded-3xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
-                  <Target className="text-blue-400" size={20} />
-                  Habilidades
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {userProfile.skills.map((skill, i) => (
-                    <span
-                      key={i}
-                      className={`px-4 py-2 rounded-2xl text-sm font-medium ${
-                        i === 0
-                          ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors'
-                      }`}
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Coluna Direita - Financeiro */}
@@ -207,31 +170,32 @@ export default function PerfilPage() {
                 </h3>
 
                 {/* Saldo Total */}
-                <FinanceCard
-                  label="Saldo Total"
-                  value={`R$ ${balance.toFixed(2)}`}
-                  icon={<DollarSign className="text-green-400" size={24} />}
-                  gradient="from-green-500/10 to-emerald-500/10"
-                />
+                  <FinanceCard
+                    label="Saldo Total"
+                    value={formatCurrency(balance.toFixed(2))}
+                    icon={<DollarSign className="text-green-400" size={24} />}
+                    gradient="from-green-500/10 to-emerald-500/10"
+                  />
 
-                {/* Despesas */}
-                <div className="grid grid-cols-2 gap-4">
-                  <FinanceCard label="Despesas Variáveis" value={`R$ ${expanse.toFixed(2)}`} color="red" />
-                  <FinanceCard label="Despesas Fixas" value={`R$ ${expensefixes.toFixed(2)}`} color="orange" />
-                </div>
+                  {/* Despesas */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FinanceCard label="Despesas Variáveis" value={formatCurrency(summary.expenses.toFixed(2))} color="red" />
+                    <FinanceCard label="Despesas Fixas" value={formatCurrency(summary.fixedExpenses.toFixed(2))} color="orange" />
+                  </div>
 
-                {/* Resultado Líquido */}
-                <FinanceCard
-                  label="Resultado Líquido"
-                  value={`R$ ${netBalance.toFixed(2)}`}
-                  subText={
-                    savingsRate >= 0
-                      ? `Taxa de economia: ${savingsRate.toFixed(1)}%`
-                      : `Déficit: ${Math.abs(savingsRate).toFixed(1)}%`
-                  }
-                  gradient={netBalance >= 0 ? "from-green-500/10 to-emerald-500/10" : "from-red-500/10 to-rose-500/10"}
-                  textColor={netBalance >= 0 ? "text-green-400" : "text-red-400"}
-                />
+                  {/* Resultado Líquido */}
+                  <FinanceCard
+                    label="Resultado Líquido"
+                    value={formatCurrency(netBalance.toFixed(2))}
+                    subText={
+                      savingsRate >= 0
+                        ? `Taxa de economia: ${savingsRate.toFixed(1)}%`
+                        : `Déficit: ${Math.abs(savingsRate).toFixed(1)}%`
+                    }
+                    gradient={netBalance >= 0 ? "from-green-500/10 to-emerald-500/10" : "from-red-500/10 to-rose-500/10"}
+                    textColor={netBalance >= 0 ? "text-green-400" : "text-red-400"}
+                  />
+
               </div>
 
               {/* Metas e Assinaturas */}

@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState, useCallback, useMemo } from "react"
-import { useAuth } from "../hooks/useAuth"
+import { useAuth } from "./useAuth"
 import { collection, getDocs } from "firebase/firestore"
 import { db } from "../lib/firebase"
 import { createTransaction } from "../services/createTransaction"
+import { Book, CreditCard, DollarSign, Film, Gift, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
 
 export interface CardData {
   bank: string
@@ -54,6 +55,7 @@ export function useAddTransaction(defaultType: TransactionType) {
 
   useEffect(() => {
     if (selectedCard) {
+      console.log("Cartão selecionado:", selectedCard)
       setFormData(prev => ({ ...prev, card: selectedCard.cardNumber, installments }))
     }
   }, [selectedCard, installments])
@@ -152,16 +154,124 @@ export function useAddTransaction(defaultType: TransactionType) {
     setInstallments(1) 
   }
    
- const transactionValue = useMemo(() => ({
+ const incomeSources = [
+    { id: "income-1", name: "Freelance", icon: <TrendingUp size={20} /> },
+    { id: "income-2", name: "Vendas", icon: <Gift size={20} /> },
+    { id: "income-3", name: "Negócios", icon: <Zap size={20} /> },
+    { id: "income-4", name: "Investimentos", icon: <TrendingUp size={20} /> },
+    { id: "income-5", name: "Outros", icon: <DollarSign size={20} /> },
+  ]
+
+  const expenseCategories = [
+    { id: "expense-1", name: "Alimentação", icon: <Gift size={20} /> },
+    { id: "expense-2", name: "Supermercado", icon: <Gift size={20} /> },
+    { id: "expense-3", name: "Compras", icon: <Gift size={20} /> },
+    { id: "expense-4", name: "Transporte", icon: <CreditCard size={20} /> },
+    { id: "expense-5", name: "Moradia", icon: <Book size={20} /> },
+    { id: "expense-6", name: "Lazer", icon: <Film size={20} /> },
+    { id: "expense-7", name: "Games", icon: <Film size={20} /> },
+    { id: "expense-8", name: "Saúde", icon: <Gift size={20} /> },
+    { id: "expense-9", name: "Educação", icon: <Book size={20} /> },
+    { id: "expense-10", name: "Outros", icon: <DollarSign size={20} /> },
+  ]
+
+  const subscriptionTypes = [
+    { id: "sub-1", name: "Filmes Streaming", icon: <Film size={20} /> },
+    { id: "sub-2", name: "Cursos", icon: <Book size={20} /> },
+    { id: "sub-3", name: "Telefone", icon: <Smartphone size={20} /> },
+    { id: "sub-4", name: "Internet", icon: <Wifi size={20} /> },
+    { id: "sub-5", name: "Outros", icon: <DollarSign size={20} /> },
+  ]
+
+  const typeIcons = {
+    income: <TrendingUp className="text-green-200" size={24} />,
+    expense: <Wallet className="text-red-200" size={24} />,
+    fixedExpense: <CreditCard className="text-blue-200" size={24} />,
+    goal: <Target className="text-purple-200" size={24} />,
+  }
+
+  const typeLabels = {
+    income: "Nova Receita",
+    expense: "Nova Despesa",
+    fixedExpense: "Despesa Fixa",
+    goal: "Nova Meta",
+  }
+
+  const typeColors = {
+    income: "from-green-500 to-emerald-600",
+    expense: "from-red-500 to-rose-600",
+    fixedExpense: "from-blue-500 to-cyan-600",
+    goal: "from-purple-500 to-violet-600",
+  }
+
+  const typeDisplayConfig = [
+    { key: "income", label: "Receita", icon: <TrendingUp size={16} /> },
+    { key: "expense", label: "Despesa", icon: <Wallet size={16} /> },
+    { key: "fixedExpense", label: "Fixa", icon: <CreditCard size={16} /> },
+    { key: "goal", label: "Meta", icon: <Target size={16} /> },
+  ]
+
+  const fieldConfig = {
+    income: {
+      label1: "Origem do dinheiro",
+      key1: "source",
+      titleKey: "source",
+      categoryKey: "category",
+      icon1: <TrendingUp size={20} />,
+      label2: "Valor da Receita",
+      key2: "amount",
+      dateKey: "date",
+      selectLabel: "Categoria",
+      selectOptions: incomeSources,
+      placeholder: "Selecione a categoria",
+    },
+    expense: {
+      label1: "Nome da Despesa",
+      key1: "title",
+      titleKey: "name",
+      categoryKey: "category",
+      icon1: <Wallet size={20} />,
+      label2: "Valor da Despesa",
+      key2: "amount",
+      dateKey: "date",
+      selectLabel: "Categoria",
+      selectOptions: expenseCategories,
+      placeholder: "Selecione a categoria",
+    },
+    fixedExpense: {
+      label1: "Nome da Assinatura",
+      key1: "name",
+      titleKey: "title",
+      categoryKey: "category",
+      icon1: <CreditCard size={20} />,
+      label2: "Valor Mensal",
+      key2: "amount",
+      dateKey: "date",
+      selectLabel: "Tipo de Assinatura",
+      selectOptions: subscriptionTypes,
+      placeholder: "Selecione o tipo",
+    },
+    goal: {
+      label1: "Nome da Meta",
+      key1: "name",
+      titleKey: "name",
+      icon1: <Target size={20} />,
+      label2: "Valor da Meta",
+      key2: "goalValue",
+      dateKey: "goalDeadline",
+      selectLabel: null,
+      selectOptions: [],
+      placeholder: "",
+    },
+  }
+
+  return {
+    // lógica
     type,
     setType,
     loading,
     rawAmount,
     rawGoalValue,
-    selectedCard,
-    setSelectedCard,
-    installments,
-    setInstallments,
     formData,
     handleChange,
     handleAmountChange,
@@ -169,11 +279,15 @@ export function useAddTransaction(defaultType: TransactionType) {
     formatCurrencyForDisplay,
     handleSubmit,
     resetForm,
-  }), [
-    type, loading, rawAmount, rawGoalValue, selectedCard, 
-    installments, formData, handleChange, handleAmountChange, 
-    handleGoalValueChange, formatCurrencyForDisplay, handleSubmit
-  ])
 
-  return transactionValue
+    // exporta dados estáticos
+    incomeSources,
+    expenseCategories,
+    subscriptionTypes,
+    typeIcons,
+    typeLabels,
+    typeColors,
+    typeDisplayConfig,
+    fieldConfig,
+  }
 }

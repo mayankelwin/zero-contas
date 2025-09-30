@@ -59,7 +59,7 @@ export function useDashboardSummary(reloadFlag?: number) {
         setFavoriteGoal({
           id: docSnap.id,
           goalName: data.goalName,
-          goalValue: Number(data.goalValue ?? 0),
+          goalValue: data.goalValue ?? 0,
           savedAmount,
         })
         setSaldoMetas(savedAmount)

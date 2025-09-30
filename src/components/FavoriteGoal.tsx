@@ -57,6 +57,7 @@ export default function FavoriteGoal({ goal, onOpenModal }: FavoriteGoalProps) {
 
   const actualPercent = Math.min((goal.savedAmount / goal.goalValue) * 100, 100)
   const isGoalCompleted = actualPercent >= 100
+  console.log("🎯 goal:", goal)
 
   // Animação da barra de progresso
   useEffect(() => {
@@ -142,7 +143,7 @@ export default function FavoriteGoal({ goal, onOpenModal }: FavoriteGoalProps) {
             </span>
           </div>
           <span className="text-sm text-gray-400">
-            de {formatCurrency(goal.goalValue)}
+            de {formatCurrency(Number(goal.goalValue ?? 0))}
           </span>
         </div>
 
@@ -180,9 +181,7 @@ export default function FavoriteGoal({ goal, onOpenModal }: FavoriteGoalProps) {
           className="mt-2 px-6 py-3 bg-gradient-to-r bg-violet-600 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 hover:cursor-pointer hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95 group"
         >
           <span className="flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4 group-hover:animate-spin" />
             Adicionar / Remover
-            <Sparkles className="w-4 h-4 group-hover:animate-spin" />
           </span>
         </button>
       )}
