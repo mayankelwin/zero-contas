@@ -6,8 +6,10 @@ import { LoadingPage } from "@/src/components/Loading"
 import CustomerModal, { useCustomerModal } from "@/src/components/CustomerModal"
 import { useHomeLogic } from "../home/useHomeLogic"
 import { useInfosGeral } from "@/src/hooks/useInfosGeral"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Edit3, Mail, MapPin, Briefcase, Calendar, DollarSign, PieChart, Target, CreditCard, User } from "lucide-react"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/src/lib/firebase"
 
 // Dados de exemplo para modal
 const exampleCustomer = {
@@ -22,24 +24,50 @@ const exampleCustomer = {
 }
 
 export default function PerfilPage() {
-  const { user, loading } = useHomeLogic()
+   const { user, loading } = useHomeLogic()
   const { balance, expanse, expensefixes, goals, subcriptions } = useInfosGeral()
   const { isModalOpen, openModal, closeModal } = useCustomerModal()
 
-  const [userProfile, setUserProfile] = useState({
-    name: user?.displayName || "Maria Fernanda",
-    email: user?.email || "maria.fernanda@email.com",
-    role: "Software Engineer",
-    location: "São Paulo, SP",
-    bio: "Desenvolvedora Full Stack com experiência em React, Node.js e TypeScript. Apaixonada por criar soluções inovadoras e eficientes.",
-    joinDate: "Janeiro 2024",
-    skills: ["JavaScript", "React", "Node.js", "TypeScript", "Python"],
-    stats: { projects: 12, completed: 8, inProgress: 4 }
-  })
+  const [userProfile, setUserProfile] = useState<any>(null)
 
-  if (loading || !user) return <LoadingPage />
+  // Buscar dados extras do usuário no Firestore
+  useEffect(() => {
+    if (!user) return
 
-  // Cálculos financeiros
+    const fetchUserData = async () => {
+      const docRef = doc(db, "users", user.uid)
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        setUserProfile({
+          name: user.displayName || data.displayName || "Usuário",
+          email: user.email || data.email || "",
+          role: data.role || "Sem cargo definido",
+          location: data.location || "Não informado",
+          bio: data.bio || "",
+          joinDate: data.joinDate || "Não informado",
+          skills: data.skills || [],
+          stats: data.stats || { projects: 0, completed: 0, inProgress: 0 },
+        })
+      } else {
+        setUserProfile({
+          name: user.displayName || "Usuário",
+          email: user.email || "",
+          role: "Sem cargo definido",
+          location: "Não informado",
+          bio: "",
+          joinDate: "Não informado",
+          skills: [],
+          stats: { projects: 0, completed: 0, inProgress: 0 },
+        })
+      }
+    }
+
+    fetchUserData()
+  }, [user])
+
+  if (loading || !user || !userProfile) return <LoadingPage />
+
   const totalExpenses = expanse + expensefixes
   const netBalance = balance - totalExpenses
   const savingsRate = balance > 0 ? ((balance - totalExpenses) / balance) * 100 : 0

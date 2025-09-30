@@ -1,7 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { X, User, Mail, Calendar, DollarSign, Globe, MapPin } from "lucide-react"
+import {
+  X,
+  User,
+  Mail,
+  Calendar,
+  DollarSign,
+  Globe,
+  MapPin,
+  CheckCircle,
+} from "lucide-react"
 
 interface CustomerModalProps {
   isOpen: boolean
@@ -30,7 +39,6 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
   if (!isOpen) return null
 
   const handleSave = () => {
-    // Aqui você implementaria a lógica para salvar as alterações
     console.log("Dados salvos:", formData)
     setIsEditing(false)
   }
@@ -47,179 +55,151 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="bg-neutral-900 text-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{customer.name}</h2>
-            <p className="text-gray-500 mt-1">{customer.email}</p>
+        <div className="flex justify-between items-start p-6 border-b border-neutral-700">
+          {/* Avatar + info */}
+          <div className="flex gap-4">
+            <div className="relative">
+              <img
+                src="/avatar.png" // Coloque o caminho correto da imagem
+                alt="Avatar"
+                className="w-16 h-16 rounded-full object-cover"
+              />
+              <div className="absolute bottom-0 right-0 bg-white rounded-full p-0.5">
+                <CheckCircle className="text-blue-500 w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-xl font-semibold">{customer.name}</h2>
+                <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                  Subscribed
+                </span>
+              </div>
+              <p className="text-sm text-gray-400">{customer.email}</p>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X size={24} />
-          </button>
+
+          {/* Ações */}
+          <div className="flex items-center gap-2">
+            <button className="text-sm border border-gray-600 px-3 py-1 rounded-md hover:bg-neutral-800">
+              Archive
+            </button>
+            <button className="text-sm border border-gray-600 px-3 py-1 rounded-md hover:bg-neutral-800">
+              View orders
+            </button>
+            <button
+              onClick={onClose}
+              className="ml-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
-          <div className="p-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-gray-500 mb-1">
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+              { label: "First seen", value: customer.firstSeen },
+              { label: "First purchase", value: customer.firstPurchase },
+              { label: "Revenue", value: customer.revenue },
+              { label: "MRR", value: customer.mrr },
+            ].map(({ label, value }, index) => (
+              <div key={index} className="text-center">
+                <div className="flex items-center justify-center gap-1 text-gray-400 mb-1 text-sm">
                   <Calendar size={16} />
-                  <span className="text-sm font-medium">First seen</span>
+                  <span className="font-medium">{label}</span>
                 </div>
-                <p className="text-gray-900 font-semibold">{customer.firstSeen}</p>
+                <p className="text-white font-semibold">{value}</p>
               </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-gray-500 mb-1">
-                  <Calendar size={16} />
-                  <span className="text-sm font-medium">First purchase</span>
-                </div>
-                <p className="text-gray-900 font-semibold">{customer.firstPurchase}</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-gray-500 mb-1">
-                  <DollarSign size={16} />
-                  <span className="text-sm font-medium">Revenue</span>
-                </div>
-                <p className="text-gray-900 font-semibold">{customer.revenue}</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-gray-500 mb-1">
-                  <DollarSign size={16} />
-                  <span className="text-sm font-medium">MRR</span>
-                </div>
-                <p className="text-gray-900 font-semibold">{customer.mrr}</p>
-              </div>
+            ))}
+          </div>
+
+          <div className="space-y-6">
+            {/* Name */}
+            <div>
+              <Label icon={<User size={18} />} title="Name" />
+              {isEditing ? (
+                <input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="input-dark"
+                />
+              ) : (
+                <p className="text-gray-300">• {customer.name}</p>
+              )}
             </div>
 
-            <div className="space-y-6">
-              {/* Name Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <User size={18} className="text-gray-500" />
-                  <h3 className="text-lg font-semibold text-gray-900">Name</h3>
-                </div>
-                <div className="space-y-2">
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      {customer.name.split(' ').map((namePart, index) => (
-                        <p key={index} className="text-gray-700">• {namePart}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+            {/* Email */}
+            <div>
+              <Label icon={<Mail size={18} />} title="Email address" />
+              {isEditing ? (
+                <input
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="input-dark"
+                />
+              ) : (
+                <p className="text-gray-300">• {customer.email}</p>
+              )}
+            </div>
 
-              {/* Email Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Mail size={18} className="text-gray-500" />
-                  <h3 className="text-lg font-semibold text-gray-900">Email address</h3>
-                </div>
-                <div className="space-y-2">
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  ) : (
-                    <div className="space-y-1">
-                      {customer.email.split(', ').map((email, index) => (
-                        <p key={index} className="text-gray-700">• {email}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+            {/* Country */}
+            <div>
+              <Label icon={<MapPin size={18} />} title="Country" />
+              {isEditing ? (
+                <input
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  className="input-dark"
+                />
+              ) : (
+                <p className="text-gray-300">• {customer.country}</p>
+              )}
+            </div>
 
-              {/* Country Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin size={18} className="text-gray-500" />
-                  <h3 className="text-lg font-semibold text-gray-900">Country</h3>
-                </div>
-                <div className="space-y-2">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={formData.country}
-                      onChange={(e) => setFormData({...formData, country: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  ) : (
-                    <p className="text-gray-700">• {customer.country}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Username Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Globe size={18} className="text-gray-500" />
-                  <h3 className="text-lg font-semibold text-gray-900">Username</h3>
-                </div>
-                <div className="space-y-2">
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      {formData.username.map((username, index) => (
-                        <input
-                          key={index}
-                          type="text"
-                          value={username}
-                          onChange={(e) => {
-                            const newUsernames = [...formData.username]
-                            newUsernames[index] = e.target.value
-                            setFormData({...formData, username: newUsernames})
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      {customer.username.map((username, index) => (
-                        <p key={index} className="text-gray-700">• {username}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+            {/* Username */}
+            <div>
+              <Label icon={<Globe size={18} />} title="Username" />
+              {isEditing ? (
+                formData.username.map((username, index) => (
+                  <input
+                    key={index}
+                    value={username}
+                    onChange={(e) => {
+                      const newUsernames = [...formData.username]
+                      newUsernames[index] = e.target.value
+                      setFormData({ ...formData, username: newUsernames })
+                    }}
+                    className="input-dark mb-2"
+                  />
+                ))
+              ) : (
+                formData.username.map((username, index) => (
+                  <p key={index} className="text-gray-300">• {username}</p>
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex justify-end gap-3 p-6 border-t border-neutral-700 bg-neutral-800">
           {isEditing ? (
             <>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-neutral-700"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 Save changes
               </button>
@@ -227,7 +207,7 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Edit Customer
             </button>
@@ -238,10 +218,24 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
   )
 }
 
-// Hook para usar o modal
+// Reusable label component
+function Label({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      {icon}
+      <h3 className="text-sm font-semibold text-white">{title}</h3>
+    </div>
+  )
+}
+
+// Tailwind input class (dark)
+const inputClass =
+  "input-dark w-full px-3 py-2 bg-neutral-800 border border-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+// Hook para modal
 export function useCustomerModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
 
   const openModal = (customer: any) => {
     setSelectedCustomer(customer)
