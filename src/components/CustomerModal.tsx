@@ -1,187 +1,320 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   X,
   User,
   Mail,
-  Calendar,
-  DollarSign,
-  Globe,
+  Phone,
+  Building,
+  Briefcase,
   MapPin,
-  CheckCircle,
+  Lock,
+  Camera,
+  ClosedCaption,
+  ArrowLeft,
 } from "lucide-react"
+import { Input } from "./Input"
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { formatCurrency } from '@/src/utils/formatCurrency';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 
-interface CustomerModalProps {
-  isOpen: boolean
-  onClose: () => void
-  customer: {
-    name: string
-    email: string
-    firstSeen: string
-    firstPurchase: string
-    revenue: string
-    mrr: string
-    country: string
-    username: string[]
-  }
+
+interface ProfileModalProps {
+  isOpen?: boolean
+  onClose?: () => void
+  uid: string
 }
 
-export default function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps) {
+export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }: ProfileModalProps) {
+  const [profileImage, setProfileImage] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    name: customer.name,
-    email: customer.email,
-    country: customer.country,
-    username: customer.username
+  const [showPasswordFields, setShowPasswordFields] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [originalData, setOriginalData] = useState<any>(null);
+  
+  const [formData, setFormData] = useState<any>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "",
+    paymentOption: "",
+    paymentdate: 0,
+    planStatus: "",
+    salary: 0,
+    jobTitle: "",
+    newPassword: "",
+    confirmPassword: ""
   })
+
+  useEffect(() => {
+    if (!isOpen || !uid) return;
+
+      const fetchUser = async () => {
+        const docRef = doc(db, "users", uid)
+        const docSnap = await getDoc(docRef)
+        if (docSnap.exists()) {
+          const data = docSnap.data()
+          setFormData({
+            firstName: data.firstName || "",
+            lastName: data.lastName || "",
+            email: data.email || "",
+            role: data.role || "",
+            paymentOption: data.paymentOption || "",
+            paymentdate: data.paymentdate || 0,
+            planStatus: data.planStatus || "",
+            salary: data.salary || 0,
+            jobTitle: data.jobTitle || "",
+            newPassword: "",
+            confirmPassword: ""
+          })
+          setOriginalData({ ...data })
+          if (data.profileImage) setProfileImage(data.profileImage) 
+        }
+      }
+
+      fetchUser()
+    }, [isOpen, uid])
+
 
   if (!isOpen) return null
 
-  const handleSave = () => {
-    console.log("Dados salvos:", formData)
-    setIsEditing(false)
+  const handleSave = async () => {
+    try {
+      if (!uid) throw new Error("Usuário não definido")
+
+      const docRef = doc(db, "users", uid)
+
+      let imageUrl = profileImage
+
+      // Se o usuário escolheu uma nova imagem, faz upload
+      if (uploadedFile) {
+        const storage = getStorage()
+        const storageRef = ref(storage, `profileImages/${uid}/${uploadedFile.name}`)
+        await uploadBytes(storageRef, uploadedFile)
+        imageUrl = await getDownloadURL(storageRef)
+      }
+
+      const dataToUpdate: any = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        role: formData.role,
+        paymentOption: formData.paymentOption,
+        paymentdate: formData.paymentdate,
+        salary: formData.salary,
+        jobTitle: formData.jobTitle,
+        ...(imageUrl && { profileImage: imageUrl }) // só salva se tiver URL
+      }
+
+      await updateDoc(docRef, dataToUpdate)
+
+      alert("Perfil atualizado com sucesso!")
+      setIsEditing(false)
+      setShowPasswordFields(false)
+      setUploadedFile(null)
+      setFormData(prev => ({ ...prev, newPassword: "", confirmPassword: "" }))
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error)
+      alert("Erro ao atualizar perfil!")
+    }
   }
 
   const handleCancel = () => {
-    setFormData({
-      name: customer.name,
-      email: customer.email,
-      country: customer.country,
-      username: customer.username
-    })
+    if (originalData) setFormData({ ...originalData, newPassword: "", confirmPassword: "" });
     setIsEditing(false)
+    setShowPasswordFields(false)
+  }
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadedFile(file)
+
+    const previewUrl = URL.createObjectURL(file)
+    setProfileImage(previewUrl)
+  }
+
+  const triggerImageUpload = () => {
+    document.getElementById('profile-image-upload')?.click()
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-neutral-900 text-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
         
         {/* Header */}
         <div className="flex justify-between items-start p-6 border-b border-neutral-700">
-          {/* Avatar + info */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            {/* Avatar Section */}
             <div className="relative">
-              <img
-                src="/avatar.png" // Coloque o caminho correto da imagem
-                alt="Avatar"
-                className="w-16 h-16 rounded-full object-cover"
+             {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-600"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center">
+                  <User size={32} className="text-gray-400" />
+                </div>
+              )}
+
+              <button
+                onClick={triggerImageUpload}
+                className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1.5 hover:bg-blue-700 transition-colors"
+              >
+                <Camera className="text-white w-3 h-3" />
+              </button>
+              <input
+                id="profile-image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
               />
-              <div className="absolute bottom-0 right-0 bg-white rounded-full p-0.5">
-                <CheckCircle className="text-blue-500 w-4 h-4" />
-              </div>
             </div>
+
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-xl font-semibold">{customer.name}</h2>
-                <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
-                  Subscribed
-                </span>
-              </div>
-              <p className="text-sm text-gray-400">{customer.email}</p>
+              <h2 className="text-xl font-semibold mb-1">Meu perfil</h2>
+              <p className="text-gray-300"> {formData.email}</p>
             </div>
           </div>
 
-          {/* Ações */}
-          <div className="flex items-center gap-2">
-            <button className="text-sm border border-gray-600 px-3 py-1 rounded-md hover:bg-neutral-800">
-              Archive
-            </button>
-            <button className="text-sm border border-gray-600 px-3 py-1 rounded-md hover:bg-neutral-800">
-              View orders
-            </button>
-            <button
-              onClick={onClose}
-              className="ml-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <X size={24} />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "First seen", value: customer.firstSeen },
-              { label: "First purchase", value: customer.firstPurchase },
-              { label: "Revenue", value: customer.revenue },
-              { label: "MRR", value: customer.mrr },
-            ].map(({ label, value }, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center gap-1 text-gray-400 mb-1 text-sm">
-                  <Calendar size={16} />
-                  <span className="font-medium">{label}</span>
-                </div>
-                <p className="text-white font-semibold">{value}</p>
-              </div>
-            ))}
-          </div>
+        {/* aba de perfil e plano da assinatura do SaaS */}
+        <div className="px-6 py-4 border-b border-neutral-700 bg-neutral-800">
+          <h3 className="text-sm font-semibold text-gray-300">Info</h3>
+        </div>
 
-          <div className="space-y-6">
+        {/* Form */}
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* Name */}
             <div>
-              <Label icon={<User size={18} />} title="Name" />
               {isEditing ? (
-                <input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-dark"
-                />
-              ) : (
-                <p className="text-gray-300">• {customer.name}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <Label icon={<Mail size={18} />} title="Email address" />
-              {isEditing ? (
-                <input
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="input-dark"
-                />
-              ) : (
-                <p className="text-gray-300">• {customer.email}</p>
-              )}
-            </div>
-
-            {/* Country */}
-            <div>
-              <Label icon={<MapPin size={18} />} title="Country" />
-              {isEditing ? (
-                <input
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="input-dark"
-                />
-              ) : (
-                <p className="text-gray-300">• {customer.country}</p>
-              )}
-            </div>
-
-            {/* Username */}
-            <div>
-              <Label icon={<Globe size={18} />} title="Username" />
-              {isEditing ? (
-                formData.username.map((username, index) => (
-                  <input
-                    key={index}
-                    value={username}
-                    onChange={(e) => {
-                      const newUsernames = [...formData.username]
-                      newUsernames[index] = e.target.value
-                      setFormData({ ...formData, username: newUsernames })
-                    }}
-                    className="input-dark mb-2"
+                <>
+                <div className="grid grid-cols-2 gap-3 justify-center">
+                <div className="">
+                <Label title="Name" />
+                  <Input
+                    value={formData.firstName}
+                    onChange={(val) => setFormData({ ...formData, firstName: val })}
+                    placeholder="First Name"
+                    icon={<User size={18} />}
                   />
-                ))
+                </div>
+                  <div>
+                  <Label title="Sobrenome" />
+                  <Input
+                    value={formData.lastName}
+                    onChange={(val) => setFormData({ ...formData, lastName: val })}
+                    placeholder="Last Name"
+                    icon={<User size={18} />}
+                  />
+                  </div>
+                  </div>
+                </>
               ) : (
-                formData.username.map((username, index) => (
-                  <p key={index} className="text-gray-300">• {username}</p>
-                ))
+              <div className=" grid grid-cols-2 gap-6">
+                <div> 
+                  <Label title="Name" />
+                  <p className="text-gray-300">• {formData.firstName} {formData.lastName}</p>
+                </div>
+
+                <div> 
+                  <Label title="E-Mail" />
+                <p className="text-gray-300"> {formData.email}</p>
+                </div>
+              </div>
+              )}
+            </div>
+          <div className=" grid grid-cols-2 gap-6">
+            {/* Job Title */}
+            <div>
+              <Label title="Cargo do Trabalho" />
+              {isEditing ? (
+                <Input
+                  value={formData.jobTitle}
+                  onChange={(val) => setFormData({ ...formData, jobTitle: val })}
+                  placeholder="Cargo"
+                  icon={<Briefcase size={18} />}
+                />
+              ) : (
+                <p className="text-gray-300">• {formData.jobTitle}</p>
+              )}
+            </div>
+
+            {/* Salary */}
+            <div>
+              <Label title="Renda Mensal" />
+              {isEditing ? (
+                <Input
+                  type="money"
+                  value={formData.salary}
+                  onChange={(val) => setFormData({ ...formData, salary: Number(val) })}
+                  placeholder="adicione seu ultimo salario aqui"
+                  icon={<Briefcase size={18} />}
+                />
+
+              ) : (
+                <p className="text-gray-300">{formatCurrency(formData.salary)}</p>
+              )}
+            </div>
+          </div>
+
+            {/* Password Section */}
+            <div>
+              <div className="flex items-center gap-2 ">
+                {!showPasswordFields && isEditing && (
+                  <>
+                  <Label title="Senha" />
+                  <button
+                    onClick={() => setShowPasswordFields(true)}
+                    className="text-sm justify-center text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Alterar a senha
+                  </button>
+                  </>
+                )}
+              </div>
+
+              {showPasswordFields && isEditing && (
+                <div className="space-y-3">
+                  <Label title="Nova senha" />
+                   <button
+                    onClick={() => setShowPasswordFields(false)}
+                    className="text-sm text-center justify-center text-blue-400 hover:text-blue-300 transition-colors flex gap-2"
+                  >
+                    <ArrowLeft />
+                    Voltar
+                  </button>
+                  <Input
+                    type="password"
+                    value={formData.newPassword}
+                    onChange={(val) => setFormData({ ...formData, newPassword: val })}
+                    placeholder="Nova senha"
+                    icon={<Lock size={18} />}
+                    showPasswordToggle
+                  />
+                  <Input
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(val) => setFormData({ ...formData, confirmPassword: val })}
+                    placeholder="Repita a senha"
+                    icon={<Lock size={18} />}
+                    showPasswordToggle
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -193,23 +326,23 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
             <>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-neutral-700"
+                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-neutral-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                Save changes
+                Save
               </button>
             </>
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              Edit Customer
+              Edit Profile
             </button>
           )}
         </div>
@@ -219,37 +352,31 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
 }
 
 // Reusable label component
-function Label({ icon, title }: { icon: React.ReactNode; title: string }) {
+function Label({ title }: { title: string }) {
   return (
-    <div className="flex items-center gap-2 mb-2">
-      {icon}
-      <h3 className="text-sm font-semibold text-white">{title}</h3>
-    </div>
+    <h3 className="text-sm font-semibold text-white mb-2 ">{title}
+    </h3>
   )
 }
 
-// Tailwind input class (dark)
-const inputClass =
-  "input-dark w-full px-3 py-2 bg-neutral-800 border border-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-
 // Hook para modal
-export function useCustomerModal() {
+export function useProfileModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  const [selectedProfile, setSelectedProfile] = useState<any>(null)
 
-  const openModal = (customer: any) => {
-    setSelectedCustomer(customer)
+  const openModal = (profile: any) => {
+    setSelectedProfile(profile)
     setIsModalOpen(true)
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
-    setSelectedCustomer(null)
+    setSelectedProfile(null)
   }
 
   return {
     isModalOpen,
-    selectedCustomer,
+    selectedProfile,
     openModal,
     closeModal
   }

@@ -1,6 +1,7 @@
 import './globals.css'
 import { AuthProvider } from '../context/AuthContext'
 import { Orbitron, Montserrat } from "next/font/google"
+import { ToastContainer } from 'react-toastify'
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -24,7 +25,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Conteúdo principal com padding para não ficar escondido atrás da faixa */}
         <div className="pt-10">
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>{children}
+            <ToastContainer 
+              position="top-right" 
+              autoClose={3000} 
+              hideProgressBar={false} 
+              newestOnTop 
+              closeOnClick 
+              rtl={false} 
+              pauseOnFocusLoss 
+              draggable 
+              pauseOnHover
+            />
+          </AuthProvider>
         </div>
       </body>
     </html>

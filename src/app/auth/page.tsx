@@ -3,10 +3,10 @@
 import { Input } from "@/src/components/Input";
 import { SelectComponent } from "@/src/components/Select";
 import { useAuth } from "@/src/hooks/useAuth"; 
-import { Calendar, Check } from "lucide-react";
-import DatePicker from "react-datepicker";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Image from "next/image";
+import TermsModal from "@/src/components/TermsModal";
 
 export default function AuthPage() {
   const {
@@ -21,6 +21,7 @@ export default function AuthPage() {
   } = useAuth();
 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,29 +32,39 @@ export default function AuthPage() {
 
   return (
     <div className="flex transition-all w-full h-full duration-500 p-10 justify-center items-center">
-    <div className={`flex w-full h-200 transition-all duration-500  ${
-        mode === "login" ? "flex-row" : "flex-row-reverse"
-      }`}>
-        
-      {/* Lado da Imagem */}
-      <div className="w-1/2 hidden lg:flex rounded-2xl relative overflow-hidden bg-gray-900">
-      
-          <div className="w-full hidden lg:flex relative">
-            <Image
-              src="/img/praia.jpg"
-              alt="Imagem de fundo"
-              fill
-              className="object-cover w-full h-full opacity-70"
-              priority
-            />
-        </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={mode} // muda quando alterna login <-> registro
+        initial={{ opacity: 0, x: mode === "login" ? -50 : 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: mode === "login" ? 50 : -50 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+        className={`flex w-full h-200 bg-gray-900 border border-gray-500 rounded-2xl ${
+          mode === "login" ? "flex-row" : "flex-row-reverse"
+        }`}
+      >
+
+      {/* Lado da Imagem */} 
+      <div className="w-1/2 hidden lg:flex rounded-2xl relative overflow-hidden"> 
+        <div className="w-full hidden lg:flex relative"> 
+          <Image src="/img/praia.jpg" alt="Imagem de fundo" fill className="object-cover w-full h-full opacity-70" priority /> 
+        </div> 
       </div>
 
       {/* Lado do Formulário */}
       <div className="w-full lg:w-1/2 rounded-2xl flex items-center justify-center p-8 bg-white dark:bg-gray-900">
         <div className="w-full max-w-md">
           {mode === "login" ? (
-            /* FORMULÁRIO DE LOGIN */
+               /* FORMULÁRIO DE LOGIN */
+            <motion.div
+              key="login"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 50 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-8"
+            >
+         
             <div className="space-y-8">
               <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Entrar</h1>
 
@@ -128,8 +139,18 @@ export default function AuthPage() {
                     </button>
                   </p>
               </div>
+               </motion.div>
             ) : (
-              /* FORMULÁRIO DE REGISTRO */
+               /* FORMULÁRIO DE REGISTRO */
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-8"
+              >
+             
               <div className="space-y-2">
                 <div>
                   <h1 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -216,21 +237,35 @@ export default function AuthPage() {
                     icon={null}
                   />
 
-                  {/* Checkbox */}
-                  <div className="flex items-start gap-3 w-full col-span-2">
-                    <div className="flex items-center h-5 mt-0.5">
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        checked={agreedToTerms}
-                        onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                      />
+                   {/* Checkbox com link para termos */}
+                    <div className="flex items-start gap-3 w-full col-span-2">
+                      <div className="flex items-center h-5 mt-0.5">
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                      </div>
+                      <label
+                        htmlFor="terms"
+                        className="text-sm text-gray-600 dark:text-gray-400"
+                      >
+                        Eu concordo com os{" "}
+                        <button
+                          type="button"
+                          onClick={() => setShowTermsModal(true)}
+                          className="font-semibold text-blue-600 underline hover:text-blue-700"
+                        >
+                          Termos & Condições
+                        </button>
+                        <TermsModal 
+                          isOpen={showTermsModal} 
+                          onClose={() => setShowTermsModal(false)} 
+                        />
+                      </label>
                     </div>
-                    <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400">
-                      Eu concordo com os <span className="font-semibold">Termos & Condições</span>
-                    </label>
-                  </div>
 
                   <button
                     type="submit"
@@ -264,21 +299,22 @@ export default function AuthPage() {
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Google</span>
                 </button>
 
-              <p className="text-gray-600 dark:text-gray-400">
-                  Já tem uma conta?{" "}
-                  <button
-                    onClick={toggleMode}
-                    className="text-blue-600 hover:underline font-medium hover:cursor-pointer"
-                  >
-                    Entrar
-                  </button>
-                </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-
+                      <p className="text-gray-600 dark:text-gray-400">
+                          Já tem uma conta?{" "}
+                          <button
+                            onClick={toggleMode}
+                            className="text-blue-600 hover:underline font-medium hover:cursor-pointer"
+                          >
+                            Entrar
+                          </button>
+                        </p>
+                      </div>
+                    </motion.div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+          </AnimatePresence>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation"
 import { login, register, loginWithGoogle } from "./../lib/auth"
 import { getAuth, onAuthStateChanged, User } from "firebase/auth"
 import { createUserProfile } from "../lib/createUserProfile"
+import { toast } from "react-toastify"
+import { FirebaseError } from "firebase/app"
 
 export type AuthMode = "login" | "register"
 
@@ -76,16 +78,18 @@ export const useAuth = () => {
 
 
   const handleSubmit = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      let userCredential = null
+      let userCredential = null;
 
       if (mode === "login") {
-        userCredential = await login(form.email, form.password)
+        userCredential = await login(form.email, form.password);
+        toast.success(`Login realizado com sucesso, ${form.firstName || "usuário"}!`);
       } else {
-       userCredential = await register(form.email, form.password, form.username, form.salary)
+        userCredential = await register(form.email, form.password, form.username, form.salary);
+
         if (userCredential) {
           await createUserProfile(userCredential, {
             email: form.email,
@@ -98,23 +102,48 @@ export const useAuth = () => {
             planStatus: "inactive",
             role: "free",
             createdAt: new Date()
-          })
+          });
+          toast.success(`Conta criada com sucesso, ${form.firstName}!`);
         }
       }
 
       if (userCredential) {
-        router.push("/home")
+        await router.push("/home");
+        setLoading(false);
+      } else {
+        setLoading(false); 
       }
 
-      return userCredential
+      return userCredential;
+
     } catch (err: any) {
-      setError(err.message || "Ocorreu um erro")
-      console.error(err)
-      return null
+      console.error(err);
+
+      let message = "Ocorreu um erro inesperado.";
+
+      if (err instanceof FirebaseError) {
+        switch (err.code) {
+          case "auth/email-already-in-use":
+            message = "Este e-mail já está em uso. Faça login ou use outro e-mail.";
+            break;
+          case "auth/invalid-email":
+            message = "E-mail inválido.";
+            break;
+          case "auth/weak-password":
+            message = "Senha muito fraca. Use ao menos 6 caracteres.";
+            break;
+        }
+      } else if (err.message) {
+        message = err.message;
+      }
+
+      toast.error(message);
+      setError(message);
+      return null;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleAuth = async () => {
     setLoading(true)
