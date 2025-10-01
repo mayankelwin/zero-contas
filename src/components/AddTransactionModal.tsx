@@ -7,6 +7,7 @@ import "react-datepicker/dist/react-datepicker.css"
 import AddCardModal from "./AddCardModal"
 import { useAddTransaction } from "../hooks/useAddTransaction"
 import { useCreateCard } from "../services/createCard"
+import { Input } from "./Input"
 
 type TransactionType = "income" | "expense" | "fixedExpense" | "goal"
 
@@ -72,9 +73,12 @@ export default function AddTransactionModal({
   }, [])
 
   const handleTypeChange = (newType: TransactionType) => {
-    resetForm()
-    setType(newType)
-    setShowDetailsPanel(false)
+    resetForm(); 
+    setType(newType);
+    setShowDetailsPanel(false);
+    setSelectedCard(null);  
+    setInstallments(1);      
+    if(newType !== 'fixedExpense') setSubscriptionType("mensal");
   }
 
   useEffect(() => {
@@ -110,7 +114,7 @@ export default function AddTransactionModal({
     uniqueId: `${card.cardNumber}-${card.bank}-${index}`
   }))
 
-  const amountNumber = Number(rawAmount.toString().replace(/[^0-9.-]+/g,"")) / 100 || 0
+  const amountNumber = Number(rawAmount.toString().replace(/[^0-9.-]+/g,"")) || 0
   const numInstallments = installments > 0 ? installments : 1
   const monthlyInterestRate = selectedCard?.interestRate ? selectedCard.interestRate / 100 : 0
 
@@ -119,9 +123,17 @@ export default function AddTransactionModal({
     return principal * (Math.pow(1 + monthlyRate, months));
   }
 
+  // Valor da parcela sem juros
+  const installmentValueWithoutInterest = amountNumber / numInstallments
+
+  // Valor total com juros
   const totalWithInterest = calculateTotalWithInterest(amountNumber, numInstallments, monthlyInterestRate)
-  const installmentValue = totalWithInterest / numInstallments
+  const installmentValueWithInterest = totalWithInterest / numInstallments
   const interestPaid = totalWithInterest - amountNumber
+  const installmentValue = selectedCard && selectedCard.interestRate > 0 
+    ? installmentValueWithInterest 
+    : installmentValueWithoutInterest
+
 
   const cfg = fieldConfig[type] ?? fieldConfig.income; 
 
@@ -204,6 +216,15 @@ export default function AddTransactionModal({
                         {cfg.label1}
                       </label>
                     )}
+                    <Input
+                      type="text"
+                      label="Descrição"
+                      value={formData[cfg.titleKey] || ""}
+                      placeholder={`Digite o ${cfg.label1.toLowerCase()}`}
+                      onChange={(e) => handleChange(cfg.titleKey, e.target.value)} 
+                      required
+                      icon={null}
+                    />
                     <input
                       type="text"
                       value={formData[cfg.titleKey] || ""}
@@ -465,7 +486,7 @@ export default function AddTransactionModal({
                       <div className="flex justify-between">
                         <span className="text-gray-300">Valor da parcela:</span>
                         <span className="text-white font-medium">
-                          {formatCurrencyForDisplay((amountNumber / installments).toString().replace('.', ''))}
+                          {formatCurrencyForDisplay(installmentValueWithoutInterest)}
                         </span>
                       </div>
 
@@ -479,14 +500,14 @@ export default function AddTransactionModal({
                           <div className="flex justify-between">
                             <span className="text-gray-300">Juros totais:</span>
                             <span className="text-red-400 font-medium">
-                              {formatCurrencyForDisplay((interestPaid * 100).toString())}
+                              {formatCurrencyForDisplay(interestPaid)}
                             </span>
                           </div>
 
                           <div className="flex justify-between border-t border-gray-600 pt-2">
                             <span className="text-gray-300 font-semibold">Total com juros:</span>
                             <span className="text-white font-bold">
-                              {formatCurrencyForDisplay((totalWithInterest * 100).toString())}
+                              {formatCurrencyForDisplay(totalWithInterest)}
                             </span>
                           </div>
 

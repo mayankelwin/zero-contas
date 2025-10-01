@@ -102,6 +102,8 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
                 category: "meta",
                 description: `${data.transactionType === "income" ? "Adicionado" : "Retirado"} da meta ${selectedGoal.goalName}`,
                 createdAt: new Date().toISOString(),
+                goalId: selectedGoal.id,
+                goalName: selectedGoal.goalName
               })
 
               setModalOpen(false)

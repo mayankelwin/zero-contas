@@ -2,28 +2,39 @@
 
 import { useEffect, useState } from "react"
 import { JSX } from "react"
-import { Query, FirestoreError, onSnapshot } from "firebase/firestore"
+import {
+  Query,
+  FirestoreError,
+  onSnapshot,
+  collection,
+  query,
+} from "firebase/firestore"
+import { useAuth } from "../hooks/useAuth"
+import { db } from "../lib/firebase"
 
 interface CardItem {
   id: string
   title?: string
   name?: string
   amount?: number
-  type?: "income" | "expense"
+  type?: "income" | "expense" | "fixedExpense" | "goal"
   value?: number
   category?: string
   subscriptionType?: string
-  date?: string 
-  nextBilling?: string 
+  date?: string
+  nextBilling?: string
+  goalName?: string
+  goalValue?: number
+  goalDeadline?: string
 }
 
 interface GenericCardProps {
   title: string
-  firebaseQuery: Query
+  firebaseQuery?: Query
   getIcon: (item: CardItem) => JSX.Element
   formatValue?: (item: CardItem) => string
   skeletonItemsCount?: number
-  cardType?: "transaction" | "subscription"
+  cardType?: "transaction" | "subscription" | "goal"
   reloadFlag?: number
 }
 
@@ -39,38 +50,60 @@ export default function CardGlobal({
   const [items, setItems] = useState<CardItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<FirestoreError | null>(null)
+  const { user } = useAuth()
 
-  /* --- FETCH DATA --- */
   useEffect(() => {
-    setLoading(true)
-    const unsubscribe = onSnapshot(
-      firebaseQuery,
-      (snapshot) => {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+    if (!user?.uid) return
 
-        const data: CardItem[] = snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as CardItem)
-        )
+    setLoading(true)
+
+    // Decide a query com base no tipo
+    const activeQuery =
+      cardType === "goal"
+        ? query(collection(db, "users", user.uid, "goals"))
+        : firebaseQuery
+
+    if (!activeQuery) return
+
+    const unsubscribe = onSnapshot(
+      activeQuery,
+      (snapshot) => {
+        const data: CardItem[] = snapshot.docs.map((doc) => {
+          const raw = doc.data()
+          // Define type "goal" se for metas
+          return {
+            id: doc.id,
+            ...raw,
+            type: cardType === "goal" ? "goal" : raw.type,
+          } as CardItem
+        })
 
         let filtered: CardItem[] = []
 
         if (cardType === "transaction") {
           filtered = data
-            .filter((item) => item.date && new Date(item.date) <= today)
+            .filter((item) =>
+              ["income", "expense", "fixedExpense"].includes(item.type ?? "")
+            )
             .sort(
               (a, b) =>
                 (b.date ? new Date(b.date).getTime() : 0) -
                 (a.date ? new Date(a.date).getTime() : 0)
             )
-        }
-
-        if (cardType === "subscription") {
+        } else if (cardType === "subscription") {
           filtered = data.sort(
             (a, b) =>
-              new Date(a.nextBilling ?? 0).getTime() - new Date(b.nextBilling ?? 0).getTime()
+              new Date(a.nextBilling ?? 0).getTime() -
+              new Date(b.nextBilling ?? 0).getTime()
+          )
+        } else if (cardType === "goal") {
+          filtered = data.sort(
+            (a, b) =>
+              new Date(a.goalDeadline ?? 0).getTime() -
+              new Date(b.goalDeadline ?? 0).getTime()
           )
         }
+
         setItems(filtered)
         setLoading(false)
       },
@@ -79,10 +112,10 @@ export default function CardGlobal({
         setLoading(false)
       }
     )
-    return () => unsubscribe()
-  }, [firebaseQuery, reloadFlag, cardType])
 
-  /* --- FORMAT FUNCTIONS --- */
+    return () => unsubscribe()
+  }, [user?.uid, firebaseQuery, reloadFlag, cardType])
+
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleDateString("pt-BR") : "-"
   const formatCurrency = (value?: number) =>
@@ -91,7 +124,6 @@ export default function CardGlobal({
       currency: "BRL",
     })
 
-  /* --- RENDER --- */
   return (
     <div className="bg-[#1E1F24] text-white rounded-2xl shadow-sm border border-gray-800 p-5 sm:p-6">
       <div className="flex items-center justify-between mb-4">
@@ -110,33 +142,53 @@ export default function CardGlobal({
             </p>
           ) : (
             items.map((item) => {
-              const displayValue = item.amount ?? item.value ?? 0;
+              const displayName =
+                item.type === "goal"
+                  ? item.goalName ?? "Meta sem nome"
+                  : item.title ?? item.name ?? "Sem nome"
+
+              const displayValue =
+                item.type === "goal"
+                  ? item.goalValue ?? 0
+                  : item.amount ?? item.value ?? 0
+
+              const displayCategory =
+                item.type === "goal"
+                  ? "Meta"
+                  : item.category ?? item.subscriptionType ?? "Sem categoria"
+
+              const displayDate =
+                item.type === "goal"
+                  ? formatDate(item.goalDeadline)
+                  : formatDate(item.date ?? item.nextBilling)
 
               return (
-                <li key={item.id} className="w-full grid grid-cols-3 gap-4 py-3 items-center justify-between align-center">
-                  {/* Nome + Ícone */}
+                <li
+                  key={item.id}
+                  className="w-full grid grid-cols-3 gap-4 py-3 items-center justify-between align-center"
+                >
                   <div className="flex items-center gap-3 ">
-                    <div className="p-2 bg-[#2A2B31] rounded-full">{getIcon(item)}</div>
+                    <div className="p-2 bg-[#2A2B31] rounded-full">
+                      {getIcon(item)}
+                    </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-200">
-                        {item.title ?? item.name ?? "Sem nome"}
+                        {displayName}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {item.category ?? item.subscriptionType ?? "Sem categoria"}
-                      </p>
+                      <p className="text-xs text-gray-500">{displayCategory}</p>
                     </div>
                   </div>
 
-                  {/* Data */}
-                  <p className="text-xs text-gray-400 text-center">
-                    {formatDate(item.date ?? item.nextBilling)}
-                  </p>
+                  <p className="text-xs text-gray-400 text-center">{displayDate}</p>
 
-                  {/* Valor */}
                   <p
                     className={`text-sm font-semibold text-center ${
-                      item.type === "expense" || cardType === "subscription"
+                      item.type === "expense" ||
+                      item.type === "fixedExpense" ||
+                      cardType === "subscription"
                         ? "text-red-400"
+                        : item.type === "goal"
+                        ? "text-blue-400"
                         : "text-green-400"
                     }`}
                   >
@@ -144,7 +196,13 @@ export default function CardGlobal({
                       ? formatValue(item)
                       : cardType === "subscription"
                       ? `- ${formatCurrency(displayValue)}`
-                      : `${item.type === "expense" ? "-" : "+"} ${formatCurrency(displayValue)}`}
+                      : item.type === "goal"
+                      ? formatCurrency(displayValue)
+                      : `${
+                          item.type === "expense" || item.type === "fixedExpense"
+                            ? "-"
+                            : "+"
+                        } ${formatCurrency(displayValue)}`}
                   </p>
                 </li>
               )
@@ -152,7 +210,6 @@ export default function CardGlobal({
           )}
         </ul>
       )}
-    
     </div>
   )
 }
