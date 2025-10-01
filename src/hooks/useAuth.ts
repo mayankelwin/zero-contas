@@ -8,13 +8,27 @@ export type AuthMode = "login" | "register"
 
 interface AuthForm {
   username: string
+  firstName: string
+  lastName: string
   email: string
   password: string
+  salary: number
+  paymentdate: number,
+  paymentOption: string 
 }
 
 export const useAuth = () => {
   const [mode, setMode] = useState<AuthMode>("login")
-  const [form, setForm] = useState<AuthForm>({ username: "", email: "", password: "" })
+  const [form, setForm] = useState<AuthForm>({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    password: "",
+    salary: 0,
+    paymentdate: 0,
+    paymentOption: "" 
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -34,13 +48,32 @@ export const useAuth = () => {
 
   const toggleMode = () => {
     setMode(mode === "login" ? "register" : "login")
-    setForm({ username: "", email: "", password: "" })
+    setForm({ 
+      username: "", 
+      firstName: "",
+      lastName: "", 
+      email: "", 
+      password: "", 
+      salary: 0, 
+      paymentdate: 0,
+      paymentOption: "",
+     })
     setError(null)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+  const handleChange = (name: keyof AuthForm, value: string | number | Date | null) => {
+  setForm(prevForm => {
+    const updatedForm = { ...prevForm, [name]: value };
+
+    // Atualiza o username automaticamente se for firstName ou lastName
+    if (name === "firstName" || name === "lastName") {
+      updatedForm.username = `${updatedForm.firstName} ${updatedForm.lastName}`.trim();
+    }
+
+    return updatedForm;
+  });
+};
+
 
   const handleSubmit = async () => {
     setLoading(true)
@@ -50,12 +83,22 @@ export const useAuth = () => {
       let userCredential = null
 
       if (mode === "login") {
-        // 🔥 CORREÇÃO: Adicionar o login que estava faltando
         userCredential = await login(form.email, form.password)
       } else {
-        userCredential = await register(form.email, form.password, form.username)
+       userCredential = await register(form.email, form.password, form.username, form.salary)
         if (userCredential) {
-          await createUserProfile(userCredential, form.username)
+          await createUserProfile(userCredential, {
+            email: form.email,
+            username: form.username,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            salary: form.salary,
+            paymentdate: form.paymentdate,
+            paymentOption: form.paymentOption,
+            planStatus: "inactive",
+            role: "free",
+            createdAt: new Date()
+          })
         }
       }
 

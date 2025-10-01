@@ -8,17 +8,18 @@ import { User } from "firebase/auth"
  * @param user - Usuário autenticado do Firebase
  * @param username - Nome fornecido manualmente (opcional)
  */
-export const createUserProfile = async (user: User, username?: string) => {
+export const createUserProfile = async (user: User, extraData: Record<string, any> = {}) => {
   if (!user || !user.uid) return
 
   const userRef = doc(db, "users", user.uid)
 
   const userData = {
-    name: username || user.displayName || "",
+    uid: user.uid,
     email: user.email || "",
-    role: "free", // padrão inicial
-    planStatus: "inactive", // padrão inicial
     createdAt: serverTimestamp(),
+    role: "free",
+    planStatus: "inactive",
+    ...extraData, 
   }
 
   try {
