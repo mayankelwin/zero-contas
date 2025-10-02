@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, DollarSign, CreditCard, Gift, Book, Film, Smartphone, Wifi, Target, TrendingUp, Zap, Calendar, Wallet, PiggyBank, Calculator, AlertTriangle, Info, ChevronLeft } from "lucide-react"
+import { X, DollarSign, CreditCard, Gift, Book, Film, Smartphone, Wifi, Target, TrendingUp, Zap, Calendar, Wallet, PiggyBank, Calculator, AlertTriangle, Info, ChevronLeft, LucideCreditCard } from "lucide-react"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import AddCardModal from "./AddCardModal"
@@ -135,7 +135,8 @@ export default function AddTransactionModal({
     : installmentValueWithoutInterest
 
 
-  const cfg = fieldConfig[type] ?? fieldConfig.income; 
+  const cfg = fieldConfig[type] ?? fieldConfig.income;
+
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fadeIn overflow-y-auto">
@@ -218,23 +219,14 @@ export default function AddTransactionModal({
                     )}
                     <Input
                       type="text"
-                      label="Descrição"
                       value={formData[cfg.titleKey] || ""}
                       placeholder={`Digite o ${cfg.label1.toLowerCase()}`}
-                      onChange={(e) => handleChange(cfg.titleKey, e.target.value)} 
+                      onChange={(v) => handleChange(cfg.titleKey, v)} 
                       required
-                      icon={null}
+                      icon={cfg.icon1}
                     />
-                    <input
-                      type="text"
-                      value={formData[cfg.titleKey] || ""}
-                      onChange={(e) => handleChange(cfg.titleKey, e.target.value)} 
-                      required
-                      className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white 
-                                placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                                focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                      placeholder={`Digite o ${cfg.label1.toLowerCase()}`}
-                    />
+
+                    
                   </div>
 
                   {/* Categoria (select se existir) */}
@@ -268,15 +260,13 @@ export default function AddTransactionModal({
                     <DollarSign size={20} />
                     {cfg.label2}
                   </label>
-                  <input
-                    type="text"
-                    value={type === "goal" ? formatCurrencyForDisplay(rawGoalValue) : formatCurrencyForDisplay(rawAmount)}
-                    onChange={(e) => type === "goal" ? handleGoalValueChange(e.target.value) : handleAmountChange(e.target.value)}
+                  <Input
+                    type="money"
+                    value={type === "goal" ? rawGoalValue : rawAmount}
+                    onChange={(v) => type === "goal" ? handleGoalValueChange(v) : handleAmountChange(v)}
+                    placeholder={`Digite o ${cfg.label1.toLowerCase()}`}
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-600 text-white 
-                              placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                              focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                    placeholder="R$ 0,00"
+                    icon={<DollarSign size={20} />}
                   />
                 </div>
 
@@ -319,15 +309,14 @@ export default function AddTransactionModal({
                     {selectedCard && (
                       <div className="flex items-center gap-4">
                         <label className="text-sm font-medium text-gray-300 flex-1">Parcelas</label>
-                        <input
+                        <Input
                           type="number"
-                          min={1}
-                          max={24}
                           value={installments}
-                          onChange={(e) => setInstallments(Math.max(1, Math.min(24, Number(e.target.value))))}
-                          className="w-24 px-3 py-2 rounded-xl bg-gray-800/50 border border-gray-600 text-white 
-                                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                    transition-all duration-300 text-center"
+                          onChange={(v) => setInstallments(Number(v))}
+                          placeholder="Número de parcelas"
+                          allowNegative={false} 
+                          required
+                          icon={<LucideCreditCard size={20} />}
                         />
                       </div>
                     )}
@@ -357,6 +346,7 @@ export default function AddTransactionModal({
                     {type === "fixedExpense" && (
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-300">Tipo de assinatura</label>
+                          
                         <select
                           value={subscriptionType}
                           onChange={(e) => setSubscriptionType(e.target.value)}

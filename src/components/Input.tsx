@@ -15,6 +15,7 @@ interface InputProps {
   variant?: "default" | "filled" | "outlined"
   size?: "sm" | "md" | "lg"
   showPasswordToggle?: boolean 
+  allowNegative?: boolean 
 }
 
 export function Input({ 
@@ -30,7 +31,8 @@ export function Input({
   success = false,
   variant = "default",
   size = "md",
-  showPasswordToggle = false
+  showPasswordToggle = false,
+  allowNegative = false,
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false)
   const [isFilled, setIsFilled] = useState(false)
@@ -45,13 +47,24 @@ export function Input({
   const handleFocus = () => setIsFocused(true)
   const handleBlur = () => setIsFocused(false)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if(type === "money") {
-    const onlyNumbers = e.target.value.replace(/\D/g, "")
-    onChange(onlyNumbers ? parseInt(onlyNumbers) : 0)
-  } else {
-    onChange(e.target.value)
+    if (type === "money") {
+      const onlyNumbers = e.target.value.replace(/\D/g, "")
+      onChange(onlyNumbers ? parseInt(onlyNumbers) : 0)
+    } 
+    else if (type === "number") {
+      let val = e.target.value
+
+      // ✅ bloqueia negativos se allowNegative = false
+      if (!allowNegative && val.startsWith("-")) {
+        val = val.replace("-", "")
+      }
+
+      onChange(val)
+    } 
+    else {
+      onChange(e.target.value)
+    }
   }
-}
 
 
   const sizeClasses = {
@@ -83,6 +96,19 @@ export function Input({
     : "text-gray-400"
 
   const inputType = showPasswordToggle && showPassword ? "text" : type
+    // Transforma centavos -> moeda
+    function formatCentsToCurrency(value: number) {
+      return (value / 100).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      })
+    }
+
+    // Transforma string digitada -> centavos
+  function parseCurrencyToCents(value: string) {
+    const numeric = value.replace(/\D/g, "")
+    return Number(numeric || "0")
+  }
 
   return (
     <div className="w-full space-y-2 relative">
@@ -110,8 +136,14 @@ export function Input({
         <input
           ref={inputRef}
           type={inputType}
-           value={type === "money" ? (Number(value) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : value}
-          onChange={handleInputChange}
+          value={type === "money" ? formatCentsToCurrency(Number(value)) : value}
+          onChange={(e) => {
+            if (type === "money") {
+              const cents = parseCurrencyToCents(e.target.value)
+              onChange(String(cents)) // 🔹 sempre guarda em centavos no estado
+            } else {
+              handleInputChange(e)
+            }}}
           onFocus={handleFocus}
           onBlur={handleBlur}
           required={required}

@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useAuth } from "./useAuth"
-import { collection, getDocs } from "firebase/firestore"
-import { db } from "../lib/firebase"
 import { createTransaction } from "../services/createTransaction"
 import { Book, CreditCard, DollarSign, Film, Gift, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
 
@@ -45,12 +43,14 @@ export function useAddTransaction(defaultType: TransactionType) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }, [])
 
-  const handleAmountChange = useCallback((value: string) => {
-    setRawAmount(value.replace(/\D/g, ""))
+  const handleAmountChange = useCallback((value: string | number) => {
+    const strValue = String(value ?? "") 
+    setRawAmount(strValue.replace(/\D/g, ""))
   }, [])
 
-  const handleGoalValueChange = useCallback((value: string) => {
-    setRawGoalValue(value.replace(/\D/g, ""))
+  const handleGoalValueChange = useCallback((value: string | number) => {
+    const strValue = String(value ?? "")
+    setRawGoalValue(strValue.replace(/\D/g, ""))
   }, [])
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore"
 import { useAuth } from "../hooks/useAuth"
 import { db } from "../lib/firebase"
+import { formatCurrency } from "../utils/formatCurrency"
 
 interface CardItem {
   id: string
@@ -118,11 +119,7 @@ export default function CardGlobal({
 
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleDateString("pt-BR") : "-"
-  const formatCurrency = (value?: number) =>
-    (value ?? 0).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    })
+  
 
   return (
     <div className="bg-[#1E1F24] text-white rounded-2xl shadow-sm border border-gray-800 p-5 sm:p-6">
