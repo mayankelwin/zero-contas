@@ -61,6 +61,10 @@ export default function AddTransactionModal({
   const [showDetailsPanel, setShowDetailsPanel] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [subscriptionType, setSubscriptionType] = useState("mensal")
+  const usedCredit = selectedCard?.usedCredit || 0;
+  const creditLimit = selectedCard?.creditLimit || 1; // Evita divisão por zero
+
+
 
   useEffect(() => {
     const checkMobile = () => {
@@ -114,7 +118,9 @@ export default function AddTransactionModal({
     uniqueId: `${card.cardNumber}-${card.bank}-${index}`
   }))
 
-  const amountNumber = Number(rawAmount.toString().replace(/[^0-9.-]+/g,"")) || 0
+  const amountNumber = Number(
+      rawAmount.toString().replace(/[^0-9.-]+/g, "")
+    ) || 0;
   const numInstallments = installments > 0 ? installments : 1
   const monthlyInterestRate = selectedCard?.interestRate ? selectedCard.interestRate / 100 : 0
 
@@ -134,9 +140,13 @@ export default function AddTransactionModal({
     ? installmentValueWithInterest 
     : installmentValueWithoutInterest
 
+  // Porcentagem do limite utilizado com base no valor total da transação
+  const totalUsedAfterTransaction = usedCredit + totalWithInterest;
+  const usedPercentage = (totalUsedAfterTransaction / creditLimit) * 100;
+  const displayedPercentage = Math.min(usedPercentage, 100).toFixed(1);
+  const exceededPercentage = usedPercentage > 100 ? (usedPercentage - 100).toFixed(1) : null;
 
   const cfg = fieldConfig[type] ?? fieldConfig.income;
-
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fadeIn overflow-y-auto">
@@ -225,8 +235,6 @@ export default function AddTransactionModal({
                       required
                       icon={cfg.icon1}
                     />
-
-                    
                   </div>
 
                   {/* Categoria (select se existir) */}
@@ -506,6 +514,37 @@ export default function AddTransactionModal({
                               <AlertTriangle size={12} />
                               <span>Parcelamento com juros do cartão</span>
                             </div>
+                          </div>
+
+                          {/* Barra de Progresso */}
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-400">Utilização do Limite</span>
+                              <span className="font-semibold text-white text-right">
+                                {displayedPercentage}%
+                              {usedPercentage > 100 && (
+                                  <p className="text-xs text-red-400">
+                                   Ultrapassaria o limite em {exceededPercentage}%
+                                  </p>
+                                )}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-700 rounded-full h-3">
+                              <div
+                                className={`h-3 rounded-full transition-all duration-1000 ${
+                                  usedPercentage > 80
+                                    ? "bg-red-500"
+                                    : usedPercentage > 50
+                                    ? "bg-yellow-500"
+                                    : "bg-green-500"
+                                }`}
+                                style={{ width: `${Math.min(usedPercentage, 100)}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-400">
+                              <span>R$ {usedCredit.toLocaleString("pt-BR")}</span>
+                              <span>R$ {creditLimit.toLocaleString("pt-BR")}</span>
+                          </div>
                           </div>
                         </>
                       )}

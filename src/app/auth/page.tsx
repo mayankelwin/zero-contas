@@ -31,7 +31,9 @@ export default function AuthPage() {
 
 
   return (
-    <div className="flex transition-all w-full h-full duration-500 p-10 justify-center items-center">
+    <div className="flex flex-col w-full min-h-screen justify-center transition-all duration-500">
+      {/* //div precisa ser menor ele esta muito largo */}
+    <div className="flex justify-center flex-col lg:flex-row transition-all duration-500 ">
     <AnimatePresence mode="wait">
       <motion.div
         key={mode} // muda quando alterna login <-> registro
@@ -39,21 +41,25 @@ export default function AuthPage() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: mode === "login" ? 50 : -50 }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
-        className={`flex w-full h-200 bg-gray-900 border border-gray-500 rounded-2xl ${
+        className={`flex w-full max-w-4xl mx-auto min-h-[500px] md:min-h-[600px] sm:max-w-2xl md:max-w-3xl lg:max-w-6xl bg-gray-900 rounded-2xl overflow-hidden ${
           mode === "login" ? "flex-row" : "flex-row-reverse"
         }`}
       >
 
-      {/* Lado da Imagem */} 
-      <div className="w-1/2 hidden lg:flex rounded-2xl relative overflow-hidden"> 
-        <div className="w-full hidden lg:flex relative"> 
-          <Image src="/img/praia.jpg" alt="Imagem de fundo" fill className="object-cover w-full h-full opacity-70" priority /> 
-        </div> 
+       {/* Lado da Imagem */} 
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <Image
+          src="/img/praia.jpg"
+          alt="Imagem de fundo"
+          fill
+          className="object-cover h-full"
+        />
       </div>
 
+
       {/* Lado do Formulário */}
-      <div className="w-full lg:w-1/2 rounded-2xl flex items-center justify-center p-8 bg-white dark:bg-gray-900">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white dark:bg-gray-900">
+        <div className="w-full max-w-lg">
           {mode === "login" ? (
                /* FORMULÁRIO DE LOGIN */
             <motion.div
@@ -163,7 +169,7 @@ export default function AuthPage() {
                   <p className="text-red-500 text-sm text-center">{error}</p>
                 )}
 
-                <form onSubmit={onSubmit} className="space-y-6 gap-2 grid grid-cols-2">
+                <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-2 space-y-6 md:space-y-0">
                   <Input
                     label="Primeiro nome"
                     type="text"
@@ -315,6 +321,7 @@ export default function AuthPage() {
                 </div>
               </motion.div>
           </AnimatePresence>
+        </div>    
     </div>
   );
 }

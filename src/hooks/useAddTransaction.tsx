@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback, useMemo } from "react"
 import { useAuth } from "./useAuth"
 import { createTransaction } from "../services/createTransaction"
 import { Book, CreditCard, DollarSign, Film, Gift, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
+import { db } from "../lib/firebase";
+import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 export interface CardData {
   bank: string
@@ -123,6 +126,33 @@ export function useAddTransaction(defaultType: TransactionType) {
       }
 
       await createTransaction(type, baseData)
+      if (type === "expense" && formData.card) {
+        const amount = Number(rawAmount) / 100
+        const cardRef = doc(db, "users", user.uid, "cards", formData.card)
+        const cardSnap = await getDoc(cardRef)
+
+        if (!cardSnap.exists()) {
+          toast.error("Cartão não encontrado.")
+          return
+        }
+
+        const cardData = cardSnap.data()
+        const creditLimit = cardData.creditLimit || 0
+        const usedCredit = cardData.usedCredit || 0
+        const availableLimit = creditLimit - usedCredit
+
+        if (amount > availableLimit) {
+          toast.error(
+            `Limite insuficiente! Você só tem R$ ${availableLimit.toFixed(2)} disponíveis.`,
+            { position: "top-right" }
+          )
+          setLoading(false)
+          return
+        }
+
+        await updateUsedCredit(user.uid, formData.card, amount)
+      }
+
       resetForm()
       onClose()
     } catch (err) {
@@ -131,6 +161,26 @@ export function useAddTransaction(defaultType: TransactionType) {
       setLoading(false)
     }
   }, [user?.uid, type, formData, rawAmount, rawGoalValue])
+
+  const updateUsedCredit = async (userId: string, cardId: string, amount: number) => {
+    try {
+      const cardRef = doc(db, "users", userId, "cards", cardId)
+      const cardSnap = await getDoc(cardRef)
+
+      if (!cardSnap.exists()) {
+        console.warn("⚠️ Cartão não encontrado com ID:", cardId)
+        return
+      }
+
+      const cardData = cardSnap.data()
+      const newUsedCredit = (cardData.usedCredit || 0) + amount
+
+      await updateDoc(cardRef, { usedCredit: newUsedCredit })
+      console.log("✅ Crédito usado atualizado com sucesso!")
+    } catch (error) {
+      console.error("❌ Erro ao atualizar o crédito usado:", error)
+    }
+  }
 
   useEffect(() => {
     setType(defaultType)
