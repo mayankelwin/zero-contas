@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useAuth } from "./useAuth"
 import { createTransaction } from "../services/createTransaction"
-import { Book, CreditCard, DollarSign, Film, Gift, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
+import { Book, CreditCard, DollarSign, Film, Gift, HeartHandshake, Home, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
 import { db } from "../lib/firebase";
 import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { toast } from "react-toastify";
@@ -36,10 +36,12 @@ export function useAddTransaction(defaultType: TransactionType) {
     category: "",
     date: null as Date | null,
     source: "",
-    subscriptionType: "",
     goalDeadline: null as Date | null,
     card: "",
     installments: 1,
+    subscriptionType: "",
+    recurrence: "monthly",
+    nextPaymentDate: null as Date | null, 
   })
 
   const handleChange = useCallback((field: string, value: any) => {
@@ -70,19 +72,26 @@ export function useAddTransaction(defaultType: TransactionType) {
       category: "",
       date: null,
       source: "",
-      subscriptionType: "",
       goalDeadline: null,
       card: "",
+      subscriptionType: "",
       installments: 1,
+      recurrence: "",
+      nextPaymentDate: null, 
     })
     setRawAmount("")
     setRawGoalValue("")
   }, [defaultType])
 
-  const formatCurrencyForDisplay = useCallback((value: string) => {
-    if (!value) return ""
-    return (parseFloat(value) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-  }, [])
+  const formatCurrencyForDisplay = (value: number | string) => {
+    const num = typeof value === "string"
+      ? Number(value.toString().replace(/[^0-9.-]+/g,"")) / 100
+      : value
+    return num.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    })
+  }
 
   const handleSubmit = useCallback(async (onClose: () => void) => {
     if (!user?.uid) return
@@ -115,8 +124,28 @@ export function useAddTransaction(defaultType: TransactionType) {
       if (type === "fixedExpense") {
         baseData.title = formData.name || "Assinatura"
         baseData.amount = Number(rawAmount) / 100
-        baseData.subscriptionType = formData.subscriptionType || "Outro"
-        baseData.category = formData.category || ""
+
+        // Salva corretamente o tipo de despesa fixa (ex: Netflix, Curso, Financiamento)
+        baseData.category = formData.category || "Outro"
+
+        // Salva o tipo de assinatura (mensal, trimestral, anual...)
+        baseData.subscriptionType = formData.subscriptionType || "mensal"
+
+        baseData.recurrence = formData.recurrence || "monthly"
+
+        const today = formData.date ? new Date(formData.date) : new Date()
+        const nextDate = new Date(today)
+
+        if (formData.recurrence === "daily") {
+          nextDate.setDate(today.getDate() + 1)
+        } else if (formData.recurrence === "weekly") {
+          nextDate.setDate(today.getDate() + 7)
+        } else {
+          nextDate.setMonth(today.getMonth() + 1)
+        }
+
+        baseData.startDate = today.toISOString()
+        baseData.nextPaymentDate = nextDate.toISOString()
       }
 
      if (type === "goal") {
@@ -193,10 +222,12 @@ export function useAddTransaction(defaultType: TransactionType) {
       category: "",
       date: null,
       source: "",
-      subscriptionType: "", 
       goalDeadline: null,
       card: "",
+      subscriptionType: "", 
       installments: 1,
+      recurrence: "",
+      nextPaymentDate: null, 
     })
     setRawAmount("")
     setRawGoalValue("")
@@ -225,12 +256,14 @@ export function useAddTransaction(defaultType: TransactionType) {
     { id: "expense-10", name: "Outros", icon: <DollarSign size={20} /> },
   ]
 
-  const subscriptionTypes = [
-    { id: "sub-1", name: "Filmes Streaming", icon: <Film size={20} /> },
+  const recurringTypes = [
+    { id: "sub-1", name: "Assinaturas", icon: <Film size={20} /> },
     { id: "sub-2", name: "Cursos", icon: <Book size={20} /> },
     { id: "sub-3", name: "Telefone", icon: <Smartphone size={20} /> },
     { id: "sub-4", name: "Internet", icon: <Wifi size={20} /> },
-    { id: "sub-5", name: "Outros", icon: <DollarSign size={20} /> },
+    { id: "sub-5", name: "Pensão", icon: <HeartHandshake size={20} /> },
+    { id: "sub-6", name: "Financiamento", icon: <Home size={20} /> },
+    { id: "sub-7", name: "Outros", icon: <DollarSign size={20} /> },
   ]
 
   const typeIcons = {
@@ -298,7 +331,7 @@ export function useAddTransaction(defaultType: TransactionType) {
       key2: "amount",
       dateKey: "date",
       selectLabel: "Tipo de Assinatura",
-      selectOptions: subscriptionTypes,
+      selectOptions: recurringTypes,
       placeholder: "Selecione o tipo",
     },
     goal: {
@@ -333,7 +366,7 @@ export function useAddTransaction(defaultType: TransactionType) {
     // exporta dados estáticos
     incomeSources,
     expenseCategories,
-    subscriptionTypes,
+    recurringTypes,
     typeIcons,
     typeLabels,
     typeColors,

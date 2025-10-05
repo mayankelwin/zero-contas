@@ -118,11 +118,9 @@ export default function AddTransactionModal({
     uniqueId: `${card.cardNumber}-${card.bank}-${index}`
   }))
 
-  const amountNumber = Number(
-      rawAmount.toString().replace(/[^0-9.-]+/g, "")
-    ) || 0;
+  const amountNumber = Number(rawAmount.toString().replace(/[^0-9.-]+/g,"")) / 100 || 0
   const numInstallments = installments > 0 ? installments : 1
-  const monthlyInterestRate = selectedCard?.interestRate ? selectedCard.interestRate / 100 : 0
+  const monthlyInterestRate = selectedCard?.interestRate? selectedCard.interestRate / 100 : 0
 
   function calculateTotalWithInterest(principal: number, months: number, monthlyRate: number) {
     if(monthlyRate === 0) return principal;
@@ -134,8 +132,8 @@ export default function AddTransactionModal({
 
   // Valor total com juros
   const totalWithInterest = calculateTotalWithInterest(amountNumber, numInstallments, monthlyInterestRate)
-  const installmentValueWithInterest = totalWithInterest / numInstallments
-  const interestPaid = totalWithInterest - amountNumber
+  const installmentValueWithInterest = totalWithInterest / numInstallments 
+  const interestPaid = totalWithInterest - amountNumber 
   const installmentValue = selectedCard && selectedCard.interestRate > 0 
     ? installmentValueWithInterest 
     : installmentValueWithoutInterest
@@ -279,57 +277,85 @@ export default function AddTransactionModal({
                 </div>
 
                 {/* 🔹 Seção: Cartão e Parcelas */}
-                {(type === "expense" || type === "fixedExpense") && (
-                  <div className="space-y-4">
-                    <label className="text-sm font-medium text-gray-300">💳 Cartão de Crédito</label>
+                  {(type === "expense" || type === "fixedExpense") && (
+                    <div className="space-y-4">
+                      {type === "fixedExpense" && (
+                        <div className="flex items-center gap-3">
+                          <input
+                              id="linkCard"
+                              type="checkbox"
+                              checked={!!selectedCard}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCard(cardsWithUniqueIds[0] || null);
+                                } else {
+                                  setSelectedCard(null);
+                                  resetForm();
+                                }
+                              }}
+                              className="w-5 h-5 accent-blue-500 rounded-md cursor-pointer"
+                            />
+                          <label htmlFor="linkCard" className="text-sm font-medium text-gray-300 cursor-pointer select-none">
+                            Vincular cartão a esta despesa fixa
+                          </label>
+                        </div>
+                      )}
 
-                    <div className="flex gap-3">
-                      <select
-                        value={selectedCard?.uniqueId || ""}
-                        onChange={(e) => {
-                          const selected = cardsWithUniqueIds.find(c => c.uniqueId === e.target.value)
-                          setSelectedCard(selected || null)
-                        }}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-white 
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                  transition-all duration-300 backdrop-blur-sm appearance-none"
-                      >
-                        <option value="">Selecione um cartão</option>
-                        {cardsWithUniqueIds.map(card => (
-                          <option key={card.uniqueId} value={card.uniqueId}>
-                            {card.cardName} **** {card.cardNumber.slice(-4)} - {card.bank}
-                          </option>
-                        ))}
-                      </select>
+                      {/* Se o checkbox estiver marcado ou for despesa comum */}
+                      {(type === "expense" || selectedCard !== null) && (
+                        <>
+                          <label className="text-sm font-medium text-gray-300">💳 Cartão de Crédito</label>
 
-                      <button
-                        type="button"
-                        onClick={() => setIsCardModalOpen(true)}
-                        className="px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 
-                                  hover:to-cyan-700 text-white rounded-xl transition-all duration-300 
-                                  hover:scale-105 flex items-center gap-2 whitespace-nowrap flex-shrink-0"
-                      >
-                        <CreditCard size={16} />
-                        <span className="hidden sm:inline">Novo</span>
-                      </button>
+                          <div className="flex gap-3">
+                            <select
+                              value={selectedCard?.uniqueId || ""}
+                              onChange={(e) => {
+                                const selected = cardsWithUniqueIds.find(c => c.uniqueId === e.target.value);
+                                setSelectedCard(selected || null);
+                              }}
+                              className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-white 
+                                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                                        transition-all duration-300 backdrop-blur-sm appearance-none"
+                            >
+                              <option value="">Selecione um cartão</option>
+                              {cardsWithUniqueIds.map(card => (
+                                <option key={card.uniqueId} value={card.uniqueId}>
+                                  {card.cardName} **** {card.cardNumber.slice(-4)} - {card.bank}
+                                </option>
+                              ))}
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => setIsCardModalOpen(true)}
+                              className="px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 
+                                        hover:to-cyan-700 text-white rounded-xl transition-all duration-300 
+                                        hover:scale-105 flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                            >
+                              <CreditCard size={16} />
+                              <span className="hidden sm:inline">Novo</span>
+                            </button>
+                          </div>
+
+                          {selectedCard && (
+                            <div className="flex items-center gap-4">
+                              <label className="text-sm font-medium text-gray-300 flex-1">Parcelas</label>
+                              <Input
+                                type="number"
+                                value={installments}
+                                onChange={(v) => setInstallments(Number(v))}
+                                placeholder="Número de parcelas"
+                                allowNegative={false} 
+                                required
+                                icon={<LucideCreditCard size={20} />}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
+                  )}
 
-                    {selectedCard && (
-                      <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium text-gray-300 flex-1">Parcelas</label>
-                        <Input
-                          type="number"
-                          value={installments}
-                          onChange={(v) => setInstallments(Number(v))}
-                          placeholder="Número de parcelas"
-                          allowNegative={false} 
-                          required
-                          icon={<LucideCreditCard size={20} />}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
                 {/* 🔹 Seção: Datas + Assinatura */}
                   <div className="grid grid-cols-2 gap-4">
                     {/* Data */}
