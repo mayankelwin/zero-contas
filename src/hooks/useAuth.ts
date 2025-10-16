@@ -44,7 +44,6 @@ export const useAuth = () => {
       setUser(firebaseUser)
       setUserLoaded(true)
     })
-
     return () => unsubscribe()
   }, [])
 
@@ -64,31 +63,27 @@ export const useAuth = () => {
   }
 
   const handleChange = (name: keyof AuthForm, value: string | number | Date | null) => {
-  setForm(prevForm => {
-    const updatedForm = { ...prevForm, [name]: value };
-
-    // Atualiza o username automaticamente se for firstName ou lastName
-    if (name === "firstName" || name === "lastName") {
-      updatedForm.username = `${updatedForm.firstName} ${updatedForm.lastName}`.trim();
-    }
-
-    return updatedForm;
-  });
-};
-
+    setForm(prevForm => {
+      const updatedForm = { ...prevForm, [name]: value }
+      if (name === "firstName" || name === "lastName") {
+        updatedForm.username = `${updatedForm.firstName} ${updatedForm.lastName}`.trim()
+      }
+      return updatedForm
+    })
+  }
 
   const handleSubmit = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
-      let userCredential = null;
+      let userCredential = null
 
       if (mode === "login") {
-        userCredential = await login(form.email, form.password);
-        toast.success(`Login realizado com sucesso, ${form.firstName || "usuário"}!`);
+        userCredential = await login(form.email, form.password)
+        toast.success(`Login realizado com sucesso, ${form.firstName || "usuário"}!`)
       } else {
-        userCredential = await register(form.email, form.password, form.username, form.salary);
+        userCredential = await register(form.email, form.password, form.username)
 
         if (userCredential) {
           await createUserProfile(userCredential, {
@@ -102,48 +97,53 @@ export const useAuth = () => {
             planStatus: "inactive",
             role: "free",
             createdAt: new Date()
-          });
-          toast.success(`Conta criada com sucesso, ${form.firstName}!`);
+          })
+          toast.success(`Conta criada com sucesso, ${form.firstName}!`)
         }
       }
 
       if (userCredential) {
-        await router.push("/home");
-        setLoading(false);
-      } else {
-        setLoading(false); 
+        await router.push("/home")
       }
 
-      return userCredential;
+      return userCredential
 
     } catch (err: any) {
-      console.error(err);
-
-      let message = "Ocorreu um erro inesperado.";
+      console.error(err)
+      let message = "Ocorreu um erro inesperado."
 
       if (err instanceof FirebaseError) {
         switch (err.code) {
+          case "auth/user-not-found":
+            message = "Nenhuma conta encontrada com esse e-mail. Verifique ou cadastre-se."
+            break
+          case "auth/invalid-credential":
+            message = "E-mail ou senha incorretos."
+            break
+          case "auth/wrong-password":
+            message = "Senha incorreta. Tente novamente."
+            break
           case "auth/email-already-in-use":
-            message = "Este e-mail já está em uso. Faça login ou use outro e-mail.";
-            break;
+            message = "Este e-mail já está em uso. Faça login ou use outro e-mail."
+            break
           case "auth/invalid-email":
-            message = "E-mail inválido.";
-            break;
+            message = "E-mail inválido."
+            break
           case "auth/weak-password":
-            message = "Senha muito fraca. Use ao menos 6 caracteres.";
-            break;
+            message = "Senha muito fraca. Use ao menos 6 caracteres."
+            break
         }
       } else if (err.message) {
-        message = err.message;
+        message = err.message
       }
 
-      toast.error(message);
-      setError(message);
-      return null;
+      toast.error(message)
+      setError(message)
+      return null
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleGoogleAuth = async () => {
     setLoading(true)
