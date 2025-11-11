@@ -2,17 +2,17 @@
 
 import Header from "@/src/components/layout/Header"
 import Sidebar from "@/src/components/layout/Sidebar"
-import DashboardSummary from "@/src/components/DashboardSummary"
-import ChartCard from "@/src/components/ChartCard"
-import AddTransactionModal from "@/src/components/AddTransactionModal"
-import CardGlobal from "@/src/components/TransactionsCards"
+import DashboardSummary from "@/src/components/ui/DashboardSummary"
+import ChartCard from "@/src/components/cards/ChartCard"
+import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransactionModal"
+import CardGlobal from "@/src/components/cards/TransactionsCards"
 
 import { collection, query, where } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
 import { useHomeLogic } from "./useHomeLogic"
 import { getTransactionIcon, getSubscriptionIcon } from "@/src/utils/icons"
-import AddButtonWithMenu from "@/src/components/AddButton"
-import { LoadingPage } from "@/src/components/Loading"
+import AddButtonWithMenu from "@/src/components/button/AddButton"
+import { LoadingPage } from "@/src/components/ui/Loading"
 
 export default function HomePage() {
   const {

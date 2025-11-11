@@ -14,9 +14,9 @@ import {
   ClosedCaption,
   ArrowLeft,
 } from "lucide-react"
-import { Input } from "./Input"
+import { Input } from "../ui/Input"
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "../../lib/firebase";
 import { formatCurrency } from '@/src/utils/formatCurrency';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 

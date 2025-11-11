@@ -6,12 +6,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc
 import { useAuth } from "@/src/context/AuthContext"
 import { toast } from "react-toastify"
 
-// Helpers
-const formatCurrencyBR = (value: number | string) => {
-  const numberValue = typeof value === "string" ? parseFloat(value) || 0 : value
-  return numberValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-}
-
+// 🔹 Função utilitária para filtrar transações por mês
 const getTransactionsByMonth = (transactions: any[], monthOffset: number = 0) => {
   const now = new Date()
   const targetDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1)
@@ -23,9 +18,10 @@ const getTransactionsByMonth = (transactions: any[], monthOffset: number = 0) =>
   })
 }
 
-export function useDashboardSummary(reloadFlag?: number) {
+export function useFinanceData(reloadFlag?: number) {
   const { user } = useAuth()
 
+  // 🔹 Estados principais
   const [summary, setSummary] = useState({ 
     total: 0, 
     income: 0, 
@@ -51,6 +47,7 @@ export function useDashboardSummary(reloadFlag?: number) {
       collection(db, "users", user.uid, "goals"),
       where("isPriority", "==", true)
     )
+
     const unsubscribeFavorite = onSnapshot(favoriteQuery, snapshot => {
       if (!snapshot.empty) {
         const docSnap = snapshot.docs[0]
@@ -85,14 +82,16 @@ export function useDashboardSummary(reloadFlag?: number) {
         return () => unsubscribeAllGoals()
       }
     })
+
     return () => unsubscribeFavorite()
   }, [user])
 
   // 🔹 Buscar todas as transações
   useEffect(() => {
     if (!user) return
-    const q = collection(db, "users", user.uid, "transactions")
-    const unsubscribe = onSnapshot(q, snapshot => {
+    const transactionsRef = collection(db, "users", user.uid, "transactions")
+
+    const unsubscribe = onSnapshot(transactionsRef, snapshot => {
       const transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       setAllTransactions(transactions)
 
@@ -103,17 +102,13 @@ export function useDashboardSummary(reloadFlag?: number) {
       let previousIncome = 0, previousExpenses = 0, previousFixedExpenses = 0
 
       currentMonthTransactions.forEach(transaction => {
-        if (transaction.type === "balance" || transaction.type === "income") {
-          currentIncome += Number(transaction.amount ?? 0)
-        }
+        if (transaction.type === "balance" || transaction.type === "income") currentIncome += Number(transaction.amount ?? 0)
         if (transaction.type === "expense") currentExpenses += Number(transaction.amount ?? 0)
         if (transaction.type === "fixedExpense") currentFixedExpenses += Number(transaction.amount ?? 0)
       })
 
       previousMonthTransactions.forEach(transaction => {
-        if (transaction.type === "balance" || transaction.type === "income") {
-          previousIncome += Number(transaction.amount ?? 0)
-        }
+        if (transaction.type === "balance" || transaction.type === "income") previousIncome += Number(transaction.amount ?? 0)
         if (transaction.type === "expense") previousExpenses += Number(transaction.amount ?? 0)
         if (transaction.type === "fixedExpense") previousFixedExpenses += Number(transaction.amount ?? 0)
       })
@@ -126,20 +121,23 @@ export function useDashboardSummary(reloadFlag?: number) {
         previousMonth: { income: previousIncome, expenses: previousExpenses, fixedExpenses: previousFixedExpenses }
       })
     })
+
     return () => unsubscribe()
   }, [user])
 
-  // Buscar cartões
+  // 🔹 Buscar cartões
   useEffect(() => {
     if (!user) return
-    const q = collection(db, "users", user.uid, "cards")
-    const unsub = onSnapshot(q, snap => {
+    const cardsRef = collection(db, "users", user.uid, "cards")
+
+    const unsub = onSnapshot(cardsRef, snap => {
       setCardsList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     })
+
     return () => unsub()
   }, [user, reloadFlag])
 
-  // CRUD cartões
+  // 🔹 CRUD cartões
   const handleAddCard = async (data: any) => {
     if (!user) return
     await addDoc(collection(db, "users", user.uid, "cards"), { ...data, createdAt: new Date().toISOString() })
@@ -152,17 +150,17 @@ export function useDashboardSummary(reloadFlag?: number) {
   }
 
   const handleUpdateCard = async (data: any) => {
-  if (!user || !editCardData) return
-  try {
-    const cardRef = doc(db, "users", user.uid, "cards", editCardData.id)
-    await updateDoc(cardRef, { ...data, updatedAt: new Date().toISOString() })
-    toast.success("Cartão atualizado com sucesso!")
-    setEditCardData(null)
-    setAddCardOpen(false)
-  } catch (err) {
-    console.error(err)
-    toast.error("Erro ao atualizar o cartão")
-  }
+    if (!user || !editCardData) return
+    try {
+      const cardRef = doc(db, "users", user.uid, "cards", editCardData.id)
+      await updateDoc(cardRef, { ...data, updatedAt: new Date().toISOString() })
+      toast.success("Cartão atualizado com sucesso!")
+      setEditCardData(null)
+      setAddCardOpen(false)
+    } catch (err) {
+      console.error(err)
+      toast.error("Erro ao atualizar o cartão")
+    }
   }
 
   const handleDeleteCard = async () => {
@@ -178,14 +176,25 @@ export function useDashboardSummary(reloadFlag?: number) {
       toast.error("Erro ao excluir o cartão")
     }
   }
- 
+
   return {
-    // estados
-    summary, saldoMetas, cardsList, favoriteGoal, selectedGoal, modalOpen, addCardOpen, selectedCardId, editCardData,
-    // setters
-    setModalOpen, setAddCardOpen, setSelectedCardId, setSelectedGoal,
-    // handlers
-    handleAddCard, handleEditCard, handleUpdateCard, handleDeleteCard,
-    // cards
+    summary,
+    saldoMetas,
+    cardsList,
+    favoriteGoal,
+    selectedGoal,
+    modalOpen,
+    addCardOpen,
+    selectedCardId,
+    editCardData,
+    setModalOpen,
+    setAddCardOpen,
+    setSelectedCardId,
+    setSelectedGoal,
+    handleAddCard,
+    handleEditCard,
+    handleUpdateCard,
+    handleDeleteCard,
+    allTransactions,
   }
 }

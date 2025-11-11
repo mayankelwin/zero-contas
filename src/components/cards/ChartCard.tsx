@@ -13,7 +13,7 @@ import {
 } from "chart.js"
 
 import { Doughnut, Bar, Line } from "react-chartjs-2"
-import { cn } from "../lib/utils"
+import { cn } from "../../lib/utils"
 
 ChartJS.register(
   ArcElement,

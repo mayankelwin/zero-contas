@@ -1,12 +1,12 @@
 "use client";
 
-import { Input } from "@/src/components/Input";
-import { SelectComponent } from "@/src/components/Select";
+import { Input } from "@/src/components/ui/Input";
+import { SelectComponent } from "@/src/components/ui/Select";
 import { useAuth } from "@/src/hooks/useAuth"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Image from "next/image";
-import TermsModal from "@/src/components/TermsModal";
+import TermsModal from "@/src/components/modal/TermsModal";
 
 export default function AuthPage() {
   const {

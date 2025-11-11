@@ -2,8 +2,8 @@
 
 import Header from "@/src/components/layout/Header"
 import Sidebar from "@/src/components/layout/Sidebar"
-import { LoadingPage } from "@/src/components/Loading"
-import useCustomerModal, { useProfileModal } from "@/src/components/CustomerModal"
+import { LoadingPage } from "@/src/components/ui/Loading"
+import useCustomerModal, { useProfileModal } from "@/src/components/modal/CustomerModal"
 import { useHomeLogic } from "../home/useHomeLogic"
 import { useInfosGeral } from "@/src/hooks/transactions/useInfosGeral"
 import { useEffect, useState } from "react"
@@ -11,7 +11,7 @@ import { Edit3, Mail, MapPin, Briefcase, Calendar, DollarSign, PieChart, CreditC
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
 import { formatCurrency } from "@/src/utils/formatCurrency"
-import ProfileModal from "@/src/components/CustomerModal"
+import ProfileModal from "@/src/components/modal/CustomerModal"
 
 // Componentes reutilizáveis
 import { InfoItem } from "@/src/components/perfil/InfoItem"

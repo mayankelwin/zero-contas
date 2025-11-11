@@ -1,8 +1,7 @@
 import BaseModal from "./BaseModal"
-import { Input } from "./Input"
+import { Input } from "../ui/Input"
 import { DollarSign } from "lucide-react"
-import { useForm } from "../hooks/useForm"
-import { formatCurrency } from "../utils/formatCurrency"
+import { useForm } from "@/src/hooks/useForm"
 
 interface AddAndRemoveModalProps {
   isOpen: boolean

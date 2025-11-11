@@ -9,9 +9,9 @@ import {
   collection,
   query,
 } from "firebase/firestore"
-import { useAuth } from "../hooks/useAuth"
-import { db } from "../lib/firebase"
-import { formatCurrency } from "../utils/formatCurrency"
+import { useAuth } from "../../hooks/useAuth"
+import { db } from "../../lib/firebase"
+import { formatCurrency } from "../../utils/formatCurrency"
 
 interface CardItem {
   id: string

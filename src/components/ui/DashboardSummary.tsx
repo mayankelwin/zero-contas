@@ -1,17 +1,17 @@
 "use client"
 
 import { ToastContainer } from "react-toastify"
-import SummaryCards from "./SummaryCards"
-import CardsSection from "./cards/CardsSection"
-import FavoriteGoal from "./FavoriteGoal"
-import AddAndRemoveModal from "./ModalAddandRemove"
-import AddCardModal from "./AddCardModal"
-import { useDashboardSummary } from "@/src/hooks/useDashboardSummary"
+import SummaryCards from "../cards/SummaryCards"
+import CardsSection from "../cards/CardsSection"
+import FavoriteGoal from "../cards/FavoriteGoal"
+import AddAndRemoveModal from "../modal/ModalAddandRemove"
+import AddCardModal from "../modal/AddCardModal"
+import { useFinanceData } from "@/src/hooks/useFinanceData"
 import { db } from "@/src/lib/firebase"
 import { doc, updateDoc, addDoc, collection } from "firebase/firestore"
 import { toast } from "react-toastify"
 import { useAuth } from "@/src/context/AuthContext"
-import { useInfosGeral } from "../hooks/transactions/useInfosGeral"
+import { useInfosGeral } from "../../hooks/transactions/useInfosGeral"
 
 export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }) {
   const {
@@ -30,11 +30,12 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
     handleEditCard,
     handleUpdateCard,
     handleDeleteCard
-  } = useDashboardSummary(reloadFlag)
+  } = useFinanceData(reloadFlag)
 
   const {
     InfosResume
   } = useInfosGeral()
+  
   const { user } = useAuth()
   
   return (

@@ -9,7 +9,7 @@ import { db } from "@/src/lib/firebase"
 import { useAuth } from "@/src/context/AuthContext"
 import { useCategoryChartData } from "@/src/hooks/useCategoryChartData"
 import { CardItem } from "@/src/types/transactions"
-import AddTransactionModal from "@/src/components/AddTransactionModal"
+import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransactionModal"
 
 export function useHomeLogic() {
   const router = useRouter()

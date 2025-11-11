@@ -33,7 +33,7 @@ export function useInfosGeral() {
       expenses: expense,
       fixedExpenses: fixed,
       total,
-      previousMonth: { income: 0, expenses: 0, fixedExpenses: 0 }, // Futuro: cálculo de mês anterior
+      previousMonth: { income: 0, expenses: 0, fixedExpenses: 0 }, 
     }
   }, [incomes, expenses, fixedExpenses])
 

@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState, useCallback, useMemo } from "react"
-import { useAuth } from "./useAuth"
-import { createTransaction } from "../services/createTransaction"
+import { useAuth } from "../useAuth"
+import { createTransaction } from "../../services/createTransaction"
 import { Book, CreditCard, DollarSign, Film, Gift, HeartHandshake, Home, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
-import { db } from "../lib/firebase";
+import { db } from "../../lib/firebase";
 import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { toast } from "react-toastify";
 
@@ -205,9 +205,9 @@ export function useAddTransaction(defaultType: TransactionType) {
       const newUsedCredit = (cardData.usedCredit || 0) + amount
 
       await updateDoc(cardRef, { usedCredit: newUsedCredit })
-      console.log("✅ Crédito usado atualizado com sucesso!")
+      console.log(" Crédito usado atualizado com sucesso!")
     } catch (error) {
-      console.error("❌ Erro ao atualizar o crédito usado:", error)
+      console.error("Erro ao atualizar o crédito usado:", error)
     }
   }
 
@@ -236,6 +236,7 @@ export function useAddTransaction(defaultType: TransactionType) {
   }
    
  const incomeSources = [
+    { id: "income-0", name: "Salario", icon: <TrendingUp size={20} /> },
     { id: "income-1", name: "Freelance", icon: <TrendingUp size={20} /> },
     { id: "income-2", name: "Vendas", icon: <Gift size={20} /> },
     { id: "income-3", name: "Negócios", icon: <Zap size={20} /> },
