@@ -23,10 +23,10 @@ export default function RelatoriosPage() {
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  // 🔹 Filtra transações usando o hook
+  // Filtra transações usando o hook
   const filteredTransactions = useMemo(() => {
     return allTransactions.filter(t => {
-      const date = new Date(t.date || t.createdAt) // <- pega a data correta
+      const date = new Date(t.date || t.createdAt) 
       const matchMonth = date.getMonth() + 1 === selectedMonth
       const matchYear = date.getFullYear() === selectedYear
       const matchType = selectedType === 'all' || t.type === selectedType
@@ -34,7 +34,7 @@ export default function RelatoriosPage() {
     })
   }, [allTransactions, selectedMonth, selectedYear, selectedType])
 
-  // 🔹 Resumo para os cards
+  // Resumo para os cards
   const income = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + (t.amount ?? 0), 0)
   const expense = filteredTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + (t.amount ?? 0), 0)
   const fixedExpense = filteredTransactions.filter(t => t.type === 'fixedExpense').reduce((acc, t) => acc + (t.amount ?? 0), 0)

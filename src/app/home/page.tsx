@@ -43,12 +43,12 @@ export default function HomePage() {
           {/* Resumo */}
           <div className="justify-between align-center flex w-1f">
           <h2 className="text-2xl font-semibold text-white">Bem vindo, {user.displayName}!</h2>
-            <button
+            {/* <button
               onClick={handleDeleteAllData}
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
             >
               Apagar Todos os Dados (Teste)
-            </button>
+            </button> */}
           </div>
 
           <DashboardSummary reloadFlag={reloadFlag} />
