@@ -9,7 +9,7 @@ import { db } from "@/src/lib/firebase"
 import { useAuth } from "@/src/context/AuthContext"
 import { useCategoryChartData } from "@/src/hooks/useCategoryChartData"
 import { CardItem } from "@/src/types/transactions"
-import AddTransactionModal from "@/src/components/AddTransactionModal"
+import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransactionModal"
 
 export function useHomeLogic() {
   const router = useRouter()
@@ -116,30 +116,37 @@ export function useHomeLogic() {
   }, [user])
 
 
-  // 🔹 Deletar todos os dados
+  // Deletar todos os dados do usuário
   const handleDeleteAllData = useCallback(async () => {
     if (!user) return
 
-    const confirmation = confirm("Deseja realmente apagar todos os dados? Isso não pode ser desfeito.")
+    const confirmation = confirm(
+      "Deseja realmente apagar todos os dados? Isso não pode ser desfeito."
+    )
     if (!confirmation) return
 
     try {
-      const collections = ["transactions", "subscriptions", "goals"]
+      const collections = ["transactions", "subscriptions", "goals", "cards"]
 
       for (const colName of collections) {
-        const snapshot = await getDocs(query(collection(db, colName), where("userId", "==", user.uid)))
-        await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(doc(db, colName, docSnap.id))))
+        // Acessa cada subcoleção dentro do documento do usuário
+        const colRef = collection(db, "users", user.uid, colName)
+        const snapshot = await getDocs(colRef)
+
+        await Promise.all(
+          snapshot.docs.map((docSnap) => deleteDoc(doc(colRef, docSnap.id)))
+        )
       }
 
       toast.success("Todos os dados foram apagados com sucesso!")
-      setReloadFlag(prev => prev + 1)
+      setReloadFlag((prev) => prev + 1)
     } catch (err) {
       console.error("Erro ao apagar dados:", err)
       toast.error("Ocorreu um erro ao apagar os dados.")
     }
   }, [user])
 
-  // 🔹 Dados para gráfico (incluindo saldo de metas)
+  // Dados para gráfico (incluindo saldo de metas)
   const spendingData = useMemo(() => ({
     labels: ["Receitas", "Despesas", "Despesas Fixas", "Saldo Metas"],
     datasets: [

@@ -49,22 +49,21 @@ export function useCreateCard() {
 
   // CRUD cartões
    const handleAddCard = async (data: any) => {
-  if (!user) return null
-  try {
-    const docRef = await addDoc(collection(db, "users", user.uid, "cards"), {
-      ...data,
-      createdAt: new Date().toISOString(),
-    })
-    const newCard = { id: docRef.id, ...data }
-    toast.success("Cartão adicionado com sucesso!")
-    return newCard 
-  } catch (error) {
-    console.error("Erro ao adicionar cartão:", error)
-    toast.error("Erro ao adicionar cartão")
-    return null
+    if (!user) return null
+    try {
+      const docRef = await addDoc(collection(db, "users", user.uid, "cards"), {
+        ...data,
+        createdAt: new Date().toISOString(),
+      })
+      const newCard = { id: docRef.id, ...data }
+      toast.success("Cartão adicionado com sucesso!")
+      return newCard 
+    } catch (error) {
+      console.error("Erro ao adicionar cartão:", error)
+      toast.error("Erro ao adicionar cartão")
+      return null
+    }
   }
-}
-
 
   const handleEditCard = (card: any) => {
     setEditCardData(card)

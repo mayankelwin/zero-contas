@@ -1,6 +1,7 @@
 import './globals.css'
 import { AuthProvider } from '../context/AuthContext'
 import { Orbitron, Montserrat } from "next/font/google"
+import { ToastContainer } from 'react-toastify'
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -17,14 +18,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`${montserrat.variable}`}>
       <body className="relative">
-        {/* Faixa de homologação */}
-        <div className="fixed top-0 left-0 w-full bg-red-600 opacity-50 text-white text-center py-2 font-semibold z-100 shadow-md">
-           Ambiente de Homologação - Apenas para testes 
-        </div>
-
-        {/* Conteúdo principal com padding para não ficar escondido atrás da faixa */}
-        <div className="pt-10">
-          <AuthProvider>{children}</AuthProvider>
+        <div className="">
+          <AuthProvider>{children}
+            <ToastContainer 
+              position="top-right" 
+              autoClose={3000} 
+              hideProgressBar={false} 
+              newestOnTop 
+              closeOnClick 
+              rtl={false} 
+              pauseOnFocusLoss 
+              draggable 
+              pauseOnHover
+            />
+          </AuthProvider>
         </div>
       </body>
     </html>

@@ -3,18 +3,34 @@ import { useRouter } from "next/navigation"
 import { login, register, loginWithGoogle } from "./../lib/auth"
 import { getAuth, onAuthStateChanged, User } from "firebase/auth"
 import { createUserProfile } from "../lib/createUserProfile"
+import { toast } from "react-toastify"
+import { FirebaseError } from "firebase/app"
 
 export type AuthMode = "login" | "register"
 
 interface AuthForm {
   username: string
+  firstName: string
+  lastName: string
   email: string
   password: string
+  salary: number
+  paymentdate: number,
+  paymentOption: string 
 }
 
 export const useAuth = () => {
   const [mode, setMode] = useState<AuthMode>("login")
-  const [form, setForm] = useState<AuthForm>({ username: "", email: "", password: "" })
+  const [form, setForm] = useState<AuthForm>({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    password: "",
+    salary: 0,
+    paymentdate: 0,
+    paymentOption: "" 
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -28,18 +44,32 @@ export const useAuth = () => {
       setUser(firebaseUser)
       setUserLoaded(true)
     })
-
     return () => unsubscribe()
   }, [])
 
   const toggleMode = () => {
     setMode(mode === "login" ? "register" : "login")
-    setForm({ username: "", email: "", password: "" })
+    setForm({ 
+      username: "", 
+      firstName: "",
+      lastName: "", 
+      email: "", 
+      password: "", 
+      salary: 0, 
+      paymentdate: 0,
+      paymentOption: "",
+     })
     setError(null)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+  const handleChange = (name: keyof AuthForm, value: string | number | Date | null) => {
+    setForm(prevForm => {
+      const updatedForm = { ...prevForm, [name]: value }
+      if (name === "firstName" || name === "lastName") {
+        updatedForm.username = `${updatedForm.firstName} ${updatedForm.lastName}`.trim()
+      }
+      return updatedForm
+    })
   }
 
   const handleSubmit = async () => {
@@ -50,23 +80,65 @@ export const useAuth = () => {
       let userCredential = null
 
       if (mode === "login") {
-        // 🔥 CORREÇÃO: Adicionar o login que estava faltando
         userCredential = await login(form.email, form.password)
+        toast.success(`Login realizado com sucesso, ${form.firstName || "usuário"}!`)
       } else {
         userCredential = await register(form.email, form.password, form.username)
+
         if (userCredential) {
-          await createUserProfile(userCredential, form.username)
+          await createUserProfile(userCredential, {
+            email: form.email,
+            username: form.username,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            salary: form.salary,
+            paymentdate: form.paymentdate,
+            paymentOption: form.paymentOption,
+            planStatus: "inactive",
+            role: "free",
+            createdAt: new Date()
+          })
+          toast.success(`Conta criada com sucesso, ${form.firstName}!`)
         }
       }
 
       if (userCredential) {
-        router.push("/home")
+        await router.push("/home")
       }
 
       return userCredential
+
     } catch (err: any) {
-      setError(err.message || "Ocorreu um erro")
       console.error(err)
+      let message = "Ocorreu um erro inesperado."
+
+      if (err instanceof FirebaseError) {
+        switch (err.code) {
+          case "auth/user-not-found":
+            message = "Nenhuma conta encontrada com esse e-mail. Verifique ou cadastre-se."
+            break
+          case "auth/invalid-credential":
+            message = "E-mail ou senha incorretos."
+            break
+          case "auth/wrong-password":
+            message = "Senha incorreta. Tente novamente."
+            break
+          case "auth/email-already-in-use":
+            message = "Este e-mail já está em uso. Faça login ou use outro e-mail."
+            break
+          case "auth/invalid-email":
+            message = "E-mail inválido."
+            break
+          case "auth/weak-password":
+            message = "Senha muito fraca. Use ao menos 6 caracteres."
+            break
+        }
+      } else if (err.message) {
+        message = err.message
+      }
+
+      toast.error(message)
+      setError(message)
       return null
     } finally {
       setLoading(false)

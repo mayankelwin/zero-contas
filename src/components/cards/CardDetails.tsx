@@ -158,7 +158,7 @@ export default function CardDetails({
                 />
               </div>
               <div className="flex justify-between text-xs text-gray-400">
-                <span>R$ 0</span>
+                <span>R$ {card.usedCredit?.toLocaleString("pt-BR")}</span>
                 <span>R$ {card.creditLimit?.toLocaleString("pt-BR")}</span>
               </div>
             </div>

@@ -6,8 +6,8 @@ import { Plus, Star, Edit2, X, Check, Search, Filter, SortAsc, Trophy, Target, C
 import { useGoalsLogic } from "@/src/hooks/useGoalsLogic"
 import { useState, useMemo } from "react"
 import dayjs from "dayjs"
-import AddTransactionModal from "@/src/components/AddTransactionModal"
-import { LoadingPage } from "@/src/components/Loading"
+import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransactionModal"
+import { LoadingPage } from "@/src/components/ui/Loading"
 
 export default function MetasScreen() {
   const { user, loading, goals, togglePriority, deleteGoal, toggleActive, finishGoal, router } =
