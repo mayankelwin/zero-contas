@@ -39,7 +39,6 @@ export function Input({
   const [showPassword, setShowPassword] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Atualiza estado de preenchimento quando o valor muda
   useEffect(() => {
     setIsFilled(!!value)
   }, [value])
@@ -47,14 +46,14 @@ export function Input({
   const handleFocus = () => setIsFocused(true)
   const handleBlur = () => setIsFocused(false)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (type === "money") {
-      const onlyNumbers = e.target.value.replace(/\D/g, "")
-      onChange(onlyNumbers ? parseInt(onlyNumbers) : 0)
-    } 
+      if (type === "money") {
+      const onlyNumbers = e.target.value.replace(/\D/g, "");
+      const val = onlyNumbers ? parseInt(onlyNumbers) : 0;
+      onChange(String(val)); 
+    }
     else if (type === "number") {
       let val = e.target.value
 
-      // ✅ bloqueia negativos se allowNegative = false
       if (!allowNegative && val.startsWith("-")) {
         val = val.replace("-", "")
       }
@@ -65,7 +64,6 @@ export function Input({
       onChange(e.target.value)
     }
   }
-
 
   const sizeClasses = {
     sm: "px-3 py-2 text-sm",
@@ -140,7 +138,7 @@ export function Input({
           onChange={(e) => {
             if (type === "money") {
               const cents = parseCurrencyToCents(e.target.value)
-              onChange(String(cents)) // 🔹 sempre guarda em centavos no estado
+              onChange(String(cents)) 
             } else {
               handleInputChange(e)
             }}}

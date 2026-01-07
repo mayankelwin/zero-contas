@@ -33,7 +33,7 @@ export function useHomeLogic() {
   }, [loading, user, router])
 
   // Modal
-  const handleSelectType = useCallback((type: "income" | "expense") => {
+  const handleSelectType = useCallback((type: "income" | "expense" | "goal" | "fixedExpense") => { 
     setTransactionType(type)
     setIsModalOpen(true)
      setTimeout(() => {

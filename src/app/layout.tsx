@@ -1,6 +1,6 @@
 import './globals.css'
 import { AuthProvider } from '../context/AuthContext'
-import { Orbitron, Montserrat } from "next/font/google"
+import { Montserrat } from "next/font/google"
 import { ToastContainer } from 'react-toastify'
 
 const montserrat = Montserrat({

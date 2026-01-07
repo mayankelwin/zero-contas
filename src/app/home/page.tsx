@@ -7,7 +7,7 @@ import ChartCard from "@/src/components/cards/ChartCard"
 import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransactionModal"
 import CardGlobal from "@/src/components/cards/TransactionsCards"
 
-import { collection, query, where } from "firebase/firestore"
+import { collection} from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
 import { useHomeLogic } from "./useHomeLogic"
 import { getTransactionIcon, getSubscriptionIcon } from "@/src/utils/icons"
@@ -18,8 +18,6 @@ export default function HomePage() {
   const {
     user,
     loading,
-    isMenuOpen,
-    setIsMenuOpen,
     isModalOpen,
     transactionType,
     reloadFlag,
@@ -27,7 +25,6 @@ export default function HomePage() {
     spendingData,
     handleSelectType,
     handleCloseModal,
-    handleDeleteAllData,
   } = useHomeLogic()
 
  if (loading || !user) return <LoadingPage />
@@ -40,7 +37,6 @@ export default function HomePage() {
         <Header />
 
         <div className="p-6 space-y-6">
-          {/* Resumo */}
           <div className="justify-between align-center flex w-1f">
           <h2 className="text-2xl font-semibold text-white">Bem vindo, {user.displayName}!</h2>
             {/* <button
@@ -53,13 +49,11 @@ export default function HomePage() {
 
           <DashboardSummary reloadFlag={reloadFlag} />
 
-          {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ChartCard title="Gastos por categoria" chartType="doughnut" data={categoryChartData} />
             <ChartCard title="Resumo por categoria" chartType="bar" data={spendingData} />
           </div>
 
-          {/* Transações e Assinaturas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CardGlobal
               title="Transações Recentes"
@@ -78,12 +72,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Botão flutuante */}
         <div className="fixed bottom-8 right-8">
           <AddButtonWithMenu onSelect={handleSelectType} />
         </div>
 
-        {/* Modal */}
         {transactionType && (
           <AddTransactionModal
             isOpen={isModalOpen}

@@ -29,14 +29,12 @@ export default function AuthPage() {
     await handleSubmit();
   };
 
-
   return (
     <div className="flex flex-col w-full min-h-screen justify-center transition-all duration-500">
-      {/* //div precisa ser menor ele esta muito largo */}
     <div className="flex justify-center flex-col lg:flex-row transition-all duration-500 ">
     <AnimatePresence mode="wait">
       <motion.div
-        key={mode} // muda quando alterna login <-> registro
+        key={mode} 
         initial={{ opacity: 0, x: mode === "login" ? -50 : 50 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: mode === "login" ? 50 : -50 }}
@@ -46,7 +44,6 @@ export default function AuthPage() {
         }`}
       >
 
-       {/* Lado da Imagem */} 
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
         <Image
           src="/img/praia.jpg"
@@ -56,12 +53,9 @@ export default function AuthPage() {
         />
       </div>
 
-
-      {/* Lado do Formulário */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white dark:bg-gray-900">
         <div className="w-full max-w-lg">
           {mode === "login" ? (
-               /* FORMULÁRIO DE LOGIN */
             <motion.div
               key="login"
               initial={{ opacity: 0, x: -50 }}
@@ -81,7 +75,6 @@ export default function AuthPage() {
               <form onSubmit={onSubmit} className="space-y-6">
                   <Input
                     type="email"
-                    name="email"
                     placeholder="Seu e-mail"
                     value={form.email}
                     onChange={(v) => handleChange("email", v)}
@@ -91,7 +84,6 @@ export default function AuthPage() {
 
                   <Input
                     type="password"
-                    name="password"
                     placeholder="Sua senha"
                     value={form.password}
                     onChange={(v) => handleChange("password", v)}
@@ -173,7 +165,6 @@ export default function AuthPage() {
                   <Input
                     label="Primeiro nome"
                     type="text"
-                    name="firstName"
                     value={form.firstName || ""}
                     onChange={(v) => handleChange("firstName", v)}
                     placeholder="Primeiro nome"
@@ -183,7 +174,6 @@ export default function AuthPage() {
                   <Input
                     label="Sobrenome"
                     type="text"
-                    name="lastName"
                     value={form.lastName || ""}
                     onChange={(v) => handleChange("lastName", v)}
                     placeholder="Sobrenome"
@@ -193,7 +183,6 @@ export default function AuthPage() {
                   <Input
                     label="E-mail"
                     type="email"
-                    name="email"
                     placeholder="Seu e-mail"
                     value={form.email}
                     onChange={(v) => handleChange("email", v)}
@@ -203,7 +192,6 @@ export default function AuthPage() {
                   <Input
                     label="Senha"
                     type="password"
-                    name="password"
                     placeholder="Crie uma senha"
                     value={form.password}
                     onChange={(v) => handleChange("password", v)}
@@ -214,9 +202,8 @@ export default function AuthPage() {
                   <Input
                     label="Dia do salário"
                     type="number"
-                    name="paymentdate"
-                    placeholderText="Digite apenas o dia"
-                    value={form.paymentdate}
+                    placeholder="Digite apenas o dia"
+                    value={form.paymentdate ? String(form.paymentdate) : ""}
                     onChange={(v) => handleChange("paymentdate", Number(v))}
                     required
                     icon={null}
@@ -235,8 +222,7 @@ export default function AuthPage() {
                   <Input
                     label="Salário"
                     type="money"
-                    name="salary"
-                    value={form.salary}
+                    value={form.salary ? String(form.salary) : ""}
                     onChange={(v) => handleChange("salary", Number(v))}
                     placeholder="Seu salário"
                     required
