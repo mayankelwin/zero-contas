@@ -14,4 +14,5 @@ export interface CardItem {
   goalName?: string;
   goalValue?: number;
   goalDeadline?: string;
+  createdAt?: string;
 }
