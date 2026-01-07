@@ -49,11 +49,14 @@ export default function HomePage() {
           </div>
 
           <DashboardSummary reloadFlag={reloadFlag} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartCard title="Gastos por categoria" chartType="doughnut" data={categoryChartData} />
-            <ChartCard title="Resumo por categoria" chartType="bar" data={spendingData} />
-          </div>
+          <ChartCard 
+            title="Resumo Mensal" 
+            chartType="bar" 
+            data={spendingData} 
+            dataKey="amount"  
+            categoryKey="label" 
+            color="#8b5cf6" 
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CardGlobal

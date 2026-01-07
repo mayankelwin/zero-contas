@@ -142,22 +142,12 @@ export function useHomeLogic() {
     }
   }, [user])
 
-  const spendingData = useMemo(() => ({
-    labels: ["Receitas", "Despesas", "Despesas Fixas", "Saldo Metas"],
-    datasets: [
-      {
-        label: "Valores (R$)",
-        data: [
-          summaryData.income,
-          summaryData.expenses,
-          summaryData.fixedExpenses,
-          summaryData.savedAmount ?? 0
-        ],
-        backgroundColor: ["#10b981", "#ef4444", "#f59e0b", "#8b5cf6"],
-        borderWidth: 1,
-      },
-    ],
-  }), [summaryData])
+  const spendingData = useMemo(() => [
+    { label: "Receitas", amount: summaryData.income },
+    { label: "Despesas", amount: summaryData.expenses },
+    { label: "Assinaturas", amount: summaryData.fixedExpenses },
+    { label: "Metas", amount: summaryData.savedAmount ?? 0 }
+  ], [summaryData]);
 
   const recentTransactions = useMemo(() => [
     ...transactions,

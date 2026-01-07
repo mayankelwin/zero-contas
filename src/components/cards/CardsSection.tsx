@@ -69,12 +69,13 @@ export default function CardsSection({
       onAddCard(); 
     }, 10);
   };
+
   return (
-    <div className="bg-[#161618] rounded-[2.5rem] border border-white/[0.03] shadow-2xl transition-all duration-500 overflow-hidden">
+    <div className="bg-[#161618] rounded-2xl border border-white/[0.03] transition-all duration-500 overflow-hidden">
       
-      {/* Header integrado com estilo minimalista */}
+      {/* Header com padding reduzido */}
       {!selectedCardId && !isMobile && cardsList.length > 0 && (
-        <div className="pt-8 px-8">
+        <div className="pt-6 px-6">
           <CardsHeader
             cardsList={cardsList}
             filteredCount={filteredAndSortedCards.length}
@@ -87,38 +88,37 @@ export default function CardsSection({
         </div>
       )}
 
-      {/* Conteúdo Principal */}
+      {/* Conteúdo Principal mais compacto */}
       {cardsList.length === 0 ? (
-        <div className="p-12 sm:p-20 text-center flex flex-col items-center justify-center group">
-          <div className="relative mb-8">
-            {/* Círculos decorativos de fundo */}
-            <div className="absolute inset-0 bg-white/[0.02] rounded-full scale-150 blur-xl" />
-            <div className="relative w-24 h-24 bg-white/[0.03] border border-white/[0.05] rounded-[2rem] flex items-center justify-center text-gray-600 group-hover:text-white transition-colors duration-500">
-              <Wallet size={40} strokeWidth={1.2} />
+        <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center group">
+          <div className="relative mb-4">
+            <div className="relative w-16 h-16 bg-white/[0.03] border border-white/[0.05] rounded-2xl flex items-center justify-center text-gray-600 group-hover:text-white transition-colors duration-500">
+              <Wallet size={28} strokeWidth={1.5} />
             </div>
           </div>
           
-          <div className="space-y-2 mb-8">
-            <h3 className="text-xl font-bold text-white tracking-tight">
-              Nenhum cartão cadastrado
+          <div className="space-y-1 mb-6">
+            <h3 className="text-lg font-bold text-white tracking-tight italic uppercase">
+              Sem Ativos
             </h3>
-            <p className="text-sm text-gray-500 max-w-[240px] mx-auto leading-relaxed">
-              Adicione seus cartões de crédito ou débito para uma gestão completa.
+            <p className="text-[10px] text-gray-500 max-w-[200px] mx-auto uppercase tracking-widest font-black opacity-50">
+              Adicione cartões para iniciar o monitoramento
             </p>
           </div>
 
           <button 
             onClick={handleAddNew}
-            className="flex items-center gap-2 px-6 py-3 bg-white text-black text-xs font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 shadow-lg shadow-white/5"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition-all active:scale-95"
           >
+            <Plus size={14} strokeWidth={3} />
             Novo Cartão
           </button>
         </div>
       ) : (
-        <div className="relative pb-8">
-          {/* Grid View / Carousel */}
+        <div className="relative">
+          {/* Grid View / Carousel - Removido padding extra vertical */}
           {!selectedCardId && !isMobile && (
-            <div className="mt-4">
+            <div className="pb-6">
               {filteredAndSortedCards.length === 0 ? (
                 <EmptyState />
               ) : (
@@ -139,9 +139,9 @@ export default function CardsSection({
             </div>
           )}
 
-          {/* Details View */}
+          {/* Details View - Ajustado para ser mais fluido em telas menores */}
           {(selectedCardId || isMobile) && selectedCard && (
-            <div className="w-full px-4 sm:px-10 py-6">
+            <div className="w-full px-4 sm:px-6 py-4">
               <CardDetails
                 card={selectedCard}
                 onEdit={onEditCard}

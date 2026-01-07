@@ -33,7 +33,8 @@ interface ChartCardProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#09090b] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-md ring-1 ring-white/5">
+      // Tooltip agora com o fundo #161618 para consistência
+      <div className="bg-[#161618] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-md ring-1 ring-white/5">
         <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{label}</p>
         <p className="text-sm font-black text-white">
           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payload[0].value)}
@@ -46,7 +47,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function ChartCard({ title, subtitle, chartType, data, dataKey, categoryKey, className, color = "#fff" }: ChartCardProps) {
   
-  // CORREÇÃO: Validação rigorosa para evitar o erro .slice()
   const isValidData = Array.isArray(data) && data.length > 0;
 
   const renderChart = () => {
@@ -132,7 +132,8 @@ export default function ChartCard({ title, subtitle, chartType, data, dataKey, c
 
   return (
     <div className={cn(
-      "bg-[#09090b] border border-white/[0.06] rounded-[2.5rem] p-8 flex flex-col group transition-all duration-500 hover:border-white/20",
+      // CORREÇÃO: bg-[#161618] e borda white/[0.03] para igualar aos outros cards
+      "bg-[#161618] border border-white/[0.03] rounded-[2.5rem] p-8 flex flex-col group transition-all duration-500 hover:border-white/10 shadow-2xl",
       className
     )}>
       <div className="mb-8">
@@ -141,9 +142,9 @@ export default function ChartCard({ title, subtitle, chartType, data, dataKey, c
             "w-1.5 h-1.5 rounded-full transition-colors",
             isValidData ? "bg-white/20 group-hover:bg-white" : "bg-white/5 animate-pulse"
           )} />
-          <h3 className="text-[11px] font-black text-white/30 uppercase tracking-[0.3em]">{title}</h3>
+          <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-white transition-colors">{title}</h3>
         </div>
-        {subtitle && <p className="text-xs text-white/10 font-medium ml-3.5">{subtitle}</p>}
+        {subtitle && <p className="text-[11px] text-gray-600 font-semibold italic ml-3.5">{subtitle}</p>}
       </div>
 
       <div className="flex-1 min-h-[300px] w-full flex items-center justify-center">
@@ -152,7 +153,6 @@ export default function ChartCard({ title, subtitle, chartType, data, dataKey, c
             {renderChart()}
           </ResponsiveContainer>
         ) : (
-          /* Estado de Loading Neutro */
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-white/5 border-t-white/20 rounded-full animate-spin" />
             <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Sincronizando Dados</span>
