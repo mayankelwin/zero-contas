@@ -8,8 +8,10 @@ import {
   LayoutDashboard, 
   Target, 
   LogOut, 
-  Wallet
-} from 'lucide-react' // Padronizando com Lucide como nos outros componentes
+  Wallet,
+  Settings,
+  PieChart
+} from 'lucide-react'
 
 const Sidebar: React.FC = () => {
   const router = useRouter()
@@ -22,37 +24,26 @@ const Sidebar: React.FC = () => {
   }
 
   const navItems = [
-    {
-      icon: LayoutDashboard,
-      path: '/home',
-      activeColor: 'text-violet-500',
-      activeBg: 'bg-violet-500/10'
-    },
-    {
-      icon: Target,
-      path: '/metas',
-      activeColor: 'text-emerald-500',
-      activeBg: 'bg-emerald-500/10'
-    }
+    { icon: LayoutDashboard, path: '/home', label: 'Início' },
+    { icon: PieChart, path: '/relatorios', label: 'Análise' },
+    { icon: Target, path: '/metas', label: 'Metas' },
+    { icon: Settings, path: '/perfil', label: 'Ajustes' },
   ]
 
   const isActive = (path: string) => 
     pathname === path || (path === '/home' && pathname === '/')
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-20 flex flex-col justify-between items-center py-8 bg-[#111113] border-r border-white/[0.04] z-50">
+    <aside className="fixed top-0 left-0 h-screen w-20 flex flex-col justify-between items-center py-8 bg-[#0a0a0a] border-r border-white/[0.02] z-50">
       
-      {/* Logo Section */}
-      <div className="flex flex-col items-center gap-1 group cursor-default">
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mb-2 shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500">
+      <div className="relative group cursor-pointer" onClick={() => router.push('/home')}>
+        <div className="absolute inset-0 bg-white opacity-0 blur-xl group-hover:opacity-20 transition-opacity duration-700" />
+        <div className="relative w-12 h-12 rounded-2xl bg-white flex items-center justify-center transition-transform duration-500 group-hover:scale-90 group-active:scale-75">
            <Wallet className="w-6 h-6 text-black" strokeWidth={2.5} />
         </div>
-        <span className="text-[10px] font-black uppercase tracking-tighter text-white/40 leading-none">Zero</span>
-        <span className="text-[10px] font-black uppercase tracking-tighter text-white/40 leading-none">Contas</span>
       </div>
 
-      {/* Navigation Icons */}
-      <nav className="flex flex-col items-center gap-8">
+      <nav className="flex flex-col items-center gap-4 bg-white/[0.02] border border-white/[0.05] p-2 rounded-[2rem] backdrop-blur-md">
         {navItems.map((item) => {
           const active = isActive(item.path)
           const Icon = item.icon
@@ -61,44 +52,41 @@ const Sidebar: React.FC = () => {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className="relative group p-4 outline-none transition-all"
+              title={item.label}
+              className="relative group w-12 h-12 flex items-center justify-center outline-none transition-all"
             >
-              {/* Indicador de Seleção Lateral */}
               {active && (
-                <div className={clsx(
-                  "absolute left-[-20px] top-1/2 -translate-y-1/2 w-1.5 h-8 rounded-r-full shadow-[0_0_15px]",
-                  item.path === '/home' ? "bg-violet-500 shadow-violet-500/50" : "bg-emerald-500 shadow-emerald-500/50"
-                )} />
+                <div className="absolute -left-1 w-1 h-4 bg-white rounded-full shadow-[0_0_10px_#fff]" />
               )}
 
               <Icon 
                 className={clsx(
-                  "w-6 h-6 transition-all duration-300 relative z-10",
+                  "w-5 h-5 transition-all duration-500 relative z-10",
                   active 
-                    ? `${item.activeColor} scale-110` 
-                    : "text-gray-500 group-hover:text-gray-300 group-hover:scale-110"
+                    ? "text-white scale-110" 
+                    : "text-white/20 group-hover:text-white/60 group-hover:scale-110"
                 )}
-                strokeWidth={active ? 2.5 : 2}
+                strokeWidth={active ? 2.5 : 1.5}
               />
 
-              {/* Glow de fundo no Hover/Active */}
               <div className={clsx(
-                "absolute inset-0 rounded-2xl transition-all duration-500 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100",
-                active ? `${item.activeBg} scale-100 opacity-100` : "bg-white/[0.03]"
+                "absolute inset-0 rounded-xl transition-all duration-500 opacity-0 group-hover:opacity-100",
+                active ? "bg-white/10 opacity-100" : "bg-white/[0.02] scale-50 group-hover:scale-100"
               )} />
             </button>
           )
         })}
       </nav>
 
-      {/* Logout Section */}
-      <div className="w-full px-4">
+      <div className="flex flex-col items-center gap-4">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center p-4 rounded-2xl text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-all duration-300 group active:scale-90"
+          className="w-12 h-12 flex items-center justify-center rounded-2xl text-white/10 hover:text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-500 group active:scale-75"
         >
-          <LogOut className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+          <LogOut className="w-5 h-5 transition-transform group-hover:rotate-12" />
         </button>
+
+        <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
       </div>
     </aside>
   )

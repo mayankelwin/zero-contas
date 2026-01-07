@@ -31,7 +31,7 @@ export default function HomePage() {
  if (loading || !user) return <LoadingPage />
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen ">
       <Sidebar />
 
       <main className="flex-1 ml-16 sm:ml-20">

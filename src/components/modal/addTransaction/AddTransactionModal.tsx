@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { X, Plus, Sparkles, Receipt, Wallet, Target, Repeat, Loader2 } from "lucide-react"
 import { useAddTransaction } from "../../../hooks/transactions/useAddTransaction"
 import { useCreateCard } from "../../../services/createCard"
@@ -8,14 +8,21 @@ import TransactionForm from "./TransactionForm"
 import TransactionDetailsPanel from "./TransactionDetailsPanel"
 import { clsx } from "clsx"
 
-// Importe o tipo do seu hook para manter a consistência
 import { TransactionType } from "../../../hooks/transactions/useAddTransaction"
+
+interface AddTransactionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  defaultType: TransactionType;
+  allowedTypes?: TransactionType[]; 
+}
 
 export default function AddTransactionModal({ 
   isOpen, 
   onClose, 
-  defaultType 
-}: { isOpen: boolean; onClose: () => void; defaultType: TransactionType }) {
+  defaultType,
+  allowedTypes 
+}: AddTransactionModalProps) {
   
   const {
     type, setType, loading, rawAmount, rawGoalValue, formData,
@@ -27,13 +34,17 @@ export default function AddTransactionModal({
   const { cardsList, selectedCard, installments, setInstallments, setSelectedCard } = useCreateCard()
   const [showDetails, setShowDetails] = useState(false)
 
+  // Filtra as opções da sidebar lateral caso existam tipos permitidos específicos
+  const filteredDisplayConfig = useMemo(() => {
+    if (!allowedTypes || allowedTypes.length === 0) return typeDisplayConfig;
+    return typeDisplayConfig.filter(t => allowedTypes.includes(t.key as TransactionType));
+  }, [typeDisplayConfig, allowedTypes]);
+
   useEffect(() => {
     setShowDetails(!!rawAmount || !!rawGoalValue)
   }, [rawAmount, rawGoalValue])
 
   if (!isOpen) return null;
-  
-  // Impede erro de indexação caso o tipo seja balance
   if (type === "balance") return null;
 
   return (
@@ -46,9 +57,9 @@ export default function AddTransactionModal({
         showDetails ? "max-w-6xl gap-6" : "max-w-3xl"
       )}>
         
-        {/* LADO ESQUERDO: Menu Toolkit Centralizado */}
+        {/* Sidebar de Seleção de Tipo (Filtrada) */}
         <div className="hidden sm:flex flex-col gap-3 p-2 bg-white/[0.02] border border-white/[0.05] rounded-3xl backdrop-blur-md self-center z-10 shadow-2xl">
-          {typeDisplayConfig.map((t) => (
+          {filteredDisplayConfig.map((t) => (
             <button
               key={t.key}
               onClick={() => setType(t.key as TransactionType)}
@@ -64,7 +75,6 @@ export default function AddTransactionModal({
               {t.key === 'fixedExpense' && <Repeat size={20} />}
               {t.key === 'goal' && <Target size={20} />}
               
-              {/* Tooltip Estratégico */}
               <span className="absolute right-full mr-4 px-3 py-1.5 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl translate-x-2 group-hover:translate-x-0 whitespace-nowrap">
                 {t.label}
               </span>
@@ -72,7 +82,6 @@ export default function AddTransactionModal({
           ))}
         </div>
 
-        {/* CARD CENTRAL: Formulário */}
         <div className="flex-1 bg-[#09090b] border border-white/[0.08] rounded-[2.5rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col min-h-[600px]">
           <div className="p-8 pb-0 flex justify-between items-start">
             <div className="space-y-1">
@@ -114,7 +123,6 @@ export default function AddTransactionModal({
                 />
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-between pt-8 border-t border-white/[0.05]">
                 <div className="flex items-center gap-4 text-white/30">
                   <Sparkles size={16} className="animate-pulse" />
@@ -134,7 +142,6 @@ export default function AddTransactionModal({
           </div>
         </div>
 
-        {/* LADO DIREITO: Preview (Aparece com ShowDetails) */}
         {showDetails && (
           <div className="hidden lg:block w-[400px] h-full animate-in slide-in-from-right-10 fade-in duration-1000">
             <TransactionDetailsPanel

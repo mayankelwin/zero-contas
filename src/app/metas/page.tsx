@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { 
   Plus, Star, Edit2, X, Check, Search, 
-  Trophy, Target, Calendar, MoreVertical,
-  ArrowUpRight, ArrowRight
+  Trophy, Target, Calendar, Sparkles, 
+  TrendingUp, Clock, ArrowRight, Save,
+  Activity,
+  ArrowUpRight
 } from "lucide-react"
 import dayjs from "dayjs"
 
@@ -15,31 +17,29 @@ import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransa
 import { LoadingPage } from "@/src/components/ui/Loading"
 import { formatCurrency } from "@/src/utils/formatCurrency"
 
-interface Goal {
-  id: string
-  goalName: string
-  goalValue: number
-  savedAmount: number
-  targetDate: string
-  createdAt: string
-  isPriority: boolean
-  isActive: boolean
-  isFinished: boolean
-}
-
 export default function MetasScreen() {
   const { 
     user, loading, goals, togglePriority, deleteGoal, 
-    toggleActive, finishGoal, router 
+    finishGoal, updateGoal 
   } = useGoalsLogic()
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "finished">("all")
-  const [sortType, setSortType] = useState<"recent" | "az" | "priority">("recent")
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  
+  const [selectedGoal, setSelectedGoal] = useState<any>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
+
+  // Sincroniza o modal se os dados da meta mudarem em tempo real
+  useEffect(() => {
+    if (selectedGoal) {
+      const updated = goals.find((g: any) => g.id === selectedGoal.id);
+      if (updated) setSelectedGoal(updated);
+    }
+  }, [goals]);
 
   const processedGoals = useMemo(() => {
-    return (goals as Goal[])
+    return (goals as any[])
       .filter(g => g.goalName.toLowerCase().includes(search.toLowerCase()))
       .filter(g => {
         if (statusFilter === "all") return true
@@ -47,96 +47,64 @@ export default function MetasScreen() {
         if (statusFilter === "inactive") return !g.isActive && !g.isFinished
         return g.isFinished
       })
-      .sort((a, b) => {
-        if (sortType === "priority") return (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0)
-        if (sortType === "az") return a.goalName.localeCompare(b.goalName)
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      })
-  }, [goals, search, statusFilter, sortType])
+      .sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0))
+  }, [goals, search, statusFilter])
 
   if (loading || !user) return <LoadingPage />
 
   return (
-    <div className="flex h-screen bg-[#0C0C0E]">
+    <div className="flex h-screen bg-[#0a0a0a] text-white">
       <Sidebar />
-      <main className="flex-1 ml-16 sm:ml-20 overflow-auto custom-scrollbar">
+      <main className="flex-1 ml-20 flex flex-col overflow-hidden">
         <Header />
         
-        <div className="p-6 sm:p-10 max-w-[1400px] mx-auto space-y-8">
-          
-          {/* Header */}
-          <section className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Metas Financeiras</h1>
-              <p className="text-gray-500 text-sm">Acompanhe seu progresso detalhado.</p>
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 hide-scrollbar">
+          <section className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-yellow-500 mb-2">
+                <Trophy size={14} className="animate-bounce" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Ambition Tracker</span>
+              </div>
+              <h1 className="text-4xl font-black tracking-tighter uppercase italic">
+                Metas <span className="text-white/20 not-italic">Financeiras</span>
+              </h1>
             </div>
+
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-200 text-black text-sm font-bold rounded-xl transition-all"
+              onClick={() => setIsAddModalOpen(true)}
+              className="group relative flex items-center gap-3 px-8 py-4 bg-white text-black rounded-2xl transition-all active:scale-95"
             >
               <Plus size={18} />
-              Nova Meta
+              <span className="text-[10px] font-black uppercase tracking-widest">Novo Alvo</span>
             </button>
           </section>
 
-          {/* Filtros Estilo Toolbar */}
-          <section className="flex flex-col md:flex-row gap-4 items-center bg-[#161618] p-3 rounded-2xl border border-white/5">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-              <input
-                type="text"
-                placeholder="Filtrar por nome..."
-                className="w-full pl-11 pr-4 py-2 bg-transparent text-sm text-white outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+          <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
+            {processedGoals.map(goal => (
+              <GoalCard 
+                key={goal.id} 
+                goal={goal}
+                onTogglePriority={togglePriority}
+                onView={() => setSelectedGoal(goal)}
               />
-            </div>
-            <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="bg-transparent text-xs text-gray-400 px-2 outline-none cursor-pointer hover:text-white"
-            >
-              <option value="all">Todos Status</option>
-              <option value="active">Ativas</option>
-              <option value="inactive">Pausadas</option>
-              <option value="finished">Concluídas</option>
-            </select>
-          </section>
-
-          {/* Lista Horizontal (Estilo Tabela) */}
-          <section className="space-y-2">
-            {/* Table Header - Oculto em mobile */}
-            <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              <div className="col-span-4">Objetivo</div>
-              <div className="col-span-2 text-center">Progresso</div>
-              <div className="col-span-2 text-right">Acumulado / Alvo</div>
-              <div className="col-span-2 text-center">Prazo</div>
-              <div className="col-span-2 text-right">Ações</div>
-            </div>
-
-            {processedGoals.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {processedGoals.map(goal => (
-                  <GoalRow 
-                    key={goal.id} 
-                    goal={goal}
-                    onTogglePriority={togglePriority}
-                    onFinish={() => finishGoal(goal)}
-                    onDelete={deleteGoal}
-                    onEdit={(id) => router.push(`/metas/editar/${id}`)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState isFiltering={!!search} onReset={() => setSearch("")} />
-            )}
+            ))}
           </section>
         </div>
 
+        {selectedGoal && (
+          <GoalDetailModal 
+            goal={selectedGoal} 
+            isOpen={!!selectedGoal} 
+            onClose={() => { setSelectedGoal(null); setIsEditMode(false); }}
+            isEditMode={isEditMode}
+            setIsEditMode={setIsEditMode}
+            onUpdate={updateGoal}
+          />
+        )}
+
         <AddTransactionModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
           defaultType="goal"
           allowedTypes={["goal"]}
         />
@@ -145,92 +113,231 @@ export default function MetasScreen() {
   )
 }
 
-function GoalRow({ 
-  goal, onTogglePriority, onFinish, onDelete, onEdit 
-}: { 
-  goal: Goal, 
-  onTogglePriority: (g: Goal) => void,
-  onFinish: () => void,
-  onDelete: (g: Goal) => void,
-  onEdit: (id: string) => void 
-}) {
+function GoalCard({ goal, onTogglePriority, onView }: any) {
   const progress = Math.min((goal.savedAmount / goal.goalValue) * 100, 100)
   
   return (
-    <div className="group bg-[#161618] border border-white/5 rounded-2xl p-4 md:px-8 md:py-4 hover:bg-[#1C1C1E] hover:border-white/10 transition-all flex flex-col md:grid md:grid-cols-12 md:items-center gap-4">
-      
-      {/* Nome e Ícone */}
-      <div className="col-span-4 flex items-center gap-4">
-        <button onClick={() => onTogglePriority(goal)} className="transition-colors">
-          <Star size={18} className={goal.isPriority ? "fill-yellow-400 text-yellow-400" : "text-gray-700 hover:text-gray-500"} />
-        </button>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{goal.goalName}</p>
-          <p className="text-[10px] text-gray-500 flex items-center gap-1">
-            {goal.isFinished ? <span className="text-emerald-500 font-bold uppercase">Concluído</span> : 'Em andamento'}
-          </p>
-        </div>
-      </div>
-
-      {/* Progresso (Barra Horizontal) */}
-      <div className="col-span-2 flex flex-col gap-1.5">
-        <div className="flex justify-between items-center text-[10px] font-medium text-gray-400 px-0.5">
-          <span>{progress.toFixed(0)}%</span>
-        </div>
-        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-          <div 
-            className={`h-full transition-all duration-1000 ${goal.isFinished ? 'bg-emerald-500' : 'bg-violet-500'}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Valores */}
-      <div className="col-span-2 text-right hidden md:block">
-        <p className="text-sm font-bold text-white">{formatCurrency(goal.savedAmount)}</p>
-        <p className="text-[10px] text-gray-600 font-medium">de {formatCurrency(goal.goalValue)}</p>
-      </div>
-
-      {/* Data */}
-      <div className="col-span-2 text-center hidden md:block text-xs text-gray-400 font-medium">
-        {dayjs(goal.targetDate).format("DD MMM, YYYY")}
-      </div>
-
-      {/* Ações */}
-      <div className="col-span-2 flex items-center justify-end gap-2">
-        {!goal.isFinished && (
+    <div 
+      onClick={onView}
+      className="group relative bg-white/[0.01] border border-white/[0.03] rounded-[2.5rem] p-8 hover:bg-white/[0.03] hover:border-white/10 transition-all cursor-pointer overflow-hidden"
+    >
+      <div className="relative z-10 space-y-8">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 italic">
+               {goal.isFinished ? 'Concluída' : 'Em Progresso'}
+            </span>
+            <h3 className="text-xl font-black uppercase tracking-tighter italic">{goal.goalName}</h3>
+          </div>
           <button 
-            onClick={onFinish}
-            className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-white transition-all"
-            title="Concluir Meta"
+            onClick={(e) => { e.stopPropagation(); onTogglePriority(goal); }}
+            className={`p-3 rounded-xl transition-all ${goal.isPriority ? 'bg-yellow-500 text-black' : 'bg-white/5 text-white/20'}`}
           >
-            <Check size={16} />
+            <Star size={16} fill={goal.isPriority ? "currentColor" : "none"} />
           </button>
-        )}
-        <button 
-          onClick={() => onEdit(goal.id)}
-          className="p-2 bg-white/5 text-gray-400 rounded-lg hover:bg-white/10 hover:text-white transition-all"
-        >
-          <Edit2 size={16} />
-        </button>
-        <button 
-          onClick={() => onDelete(goal)}
-          className="p-2 bg-red-500/5 text-red-500/50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-        >
-          <X size={16} />
-        </button>
+        </div>
+
+        <div className="space-y-3">
+          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-1000 ${goal.isFinished ? 'bg-emerald-500' : 'bg-white'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+            <span>{progress.toFixed(0)}% Alcançado</span>
+            <span className="text-white/40">{formatCurrency(goal.goalValue)}</span>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-function EmptyState({ isFiltering, onReset }: any) {
+function GoalDetailModal({ goal, isOpen, onClose, isEditMode, setIsEditMode, onUpdate, userIncomes }: any) {
+  const [editData, setEditData] = useState({ ...goal });
+
+  useEffect(() => {
+    setEditData({ ...goal });
+  }, [goal]);
+
+  const stats = useMemo(() => {
+    const remaining = goal.goalValue - (goal.savedAmount || 0);
+    const today = dayjs();
+    const deadline = dayjs(goal.goalDeadline);
+    
+    let months = deadline.diff(today, 'month');
+    if (months <= 0 && deadline.isAfter(today)) months = 1;
+    const monthlyAport = months > 0 ? remaining / months : remaining;
+
+    return {
+      remaining,
+      months: months > 0 ? months : 1,
+      monthlyAport,
+      // Supondo que você passe a receita mensal do usuário via props
+      viability: userIncomes > 0 ? (monthlyAport / userIncomes) * 100 : 0
+    };
+  }, [goal, userIncomes]);
+
+  if (!isOpen) return null;
+
   return (
-    <div className="py-20 text-center border border-dashed border-white/5 rounded-3xl">
-      <p className="text-gray-500 text-sm">Nenhum registro encontrado.</p>
-      {isFiltering && (
-        <button onClick={onReset} className="mt-2 text-xs text-violet-400">Remover filtros</button>
-      )}
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      
+      <div className="relative w-full max-w-4xl bg-[#0f0f0f] border border-white/10 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Header Minimalista */}
+        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-white/[0.02]">
+           <div className="flex items-center gap-4">
+              <h2 className="text-xl font-black uppercase italic tracking-tighter">
+                {isEditMode ? "Editar Meta" : goal.goalName}
+              </h2>
+              {!isEditMode && (
+                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-black rounded-full border border-emerald-500/20">
+                  {((goal.savedAmount / goal.goalValue) * 100).toFixed(0)}% CONCLUÍDO
+                </span>
+              )}
+           </div>
+           <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40 hover:text-white"
+              >
+                {isEditMode ? <X size={20}/> : <Edit2 size={20}/>}
+              </button>
+              <button onClick={onClose} className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-white/20 hover:text-red-500">
+                <X size={20} />
+              </button>
+           </div>
+        </div>
+
+        <div className="p-8">
+          {isEditMode ? (
+            /* Layout de Edição */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Nome do Objetivo</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-emerald-500 transition-all font-bold"
+                      value={editData.goalName}
+                      onChange={e => setEditData({...editData, goalName: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Valor Alvo</label>
+                      <input 
+                        type="number"
+                        className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-emerald-500 transition-all font-bold"
+                        value={editData.goalValue}
+                        onChange={e => setEditData({...editData, goalValue: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Prazo</label>
+                      <input 
+                        type="date"
+                        className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-emerald-500 transition-all font-bold text-white [color-scheme:dark]"
+                        value={dayjs(editData.goalDeadline).format('YYYY-MM-DD')}
+                        onChange={e => setEditData({...editData, goalDeadline: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => { onUpdate(goal.id, editData); setIsEditMode(false); }}
+                    className="w-full py-4 bg-white text-black font-black uppercase tracking-widest rounded-xl hover:bg-emerald-500 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Check size={18} /> Salvar Alterações
+                  </button>
+               </div>
+               <div className="bg-white/5 rounded-2xl p-6 flex flex-col justify-center items-center text-center border border-dashed border-white/10">
+                  <Sparkles className="text-emerald-500 mb-4" size={32} />
+                  <p className="text-xs text-white/60 font-medium">Os novos cálculos de projeção serão atualizados assim que você salvar os dados.</p>
+               </div>
+            </div>
+          ) : (
+            /* Layout de Visualização - Inteligência Financeira */
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              
+              {/* Coluna da Esquerda: O Plano (Cálculos) */}
+              <div className="lg:col-span-3 space-y-6">
+                <div className="bg-emerald-500 rounded-2xl p-8 text-black relative overflow-hidden group">
+                  <div className="relative z-10 space-y-4">
+                    <span className="px-3 py-1 bg-black/10 rounded-full text-[10px] font-black uppercase tracking-widest">Plano de Ação</span>
+                    <h3 className="text-4xl font-black tracking-tighter leading-none">
+                      {formatCurrency(stats.monthlyAport)} <span className="text-lg opacity-60">/mês</span>
+                    </h3>
+                    <p className="text-sm font-bold leading-tight opacity-80">
+                      Se você poupar <span className="underline">{formatCurrency(stats.monthlyAport)}</span> por mês durante os próximos <span className="underline">{stats.months} meses</span>, você atingirá o objetivo de {formatCurrency(goal.goalValue)}.
+                    </p>
+                  </div>
+                  <TrendingUp size={120} className="absolute -right-4 -bottom-4 text-black/10" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-6 bg-white/[0.03] border border-white/5 rounded-2xl">
+                    <p className="text-[10px] font-black text-white/30 uppercase mb-2">Falta Juntar</p>
+                    <p className="text-xl font-black text-red-400">{formatCurrency(stats.remaining)}</p>
+                  </div>
+                  <div className="p-6 bg-white/[0.03] border border-white/5 rounded-2xl">
+                    <p className="text-[10px] font-black text-white/30 uppercase mb-2">Data Limite</p>
+                    <p className="text-xl font-black">{dayjs(goal.goalDeadline).format('MMM YYYY')}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coluna da Direita: Viabilidade (Receita) */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="p-8 bg-white/5 border border-white/10 rounded-2xl space-y-6">
+                  <div>
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-4">Saúde da Meta</p>
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-xs font-bold text-white/60">Impacto na Receita</span>
+                      <span className={`text-lg font-black ${stats.viability > 30 ? 'text-orange-500' : 'text-emerald-500'}`}>
+                        {stats.viability.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-1000 ${stats.viability > 30 ? 'bg-orange-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${Math.min(stats.viability, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2 text-white/40">
+                        <ArrowUpRight size={14} />
+                        <span className="text-[10px] font-black uppercase">Sua Receita</span>
+                      </div>
+                      <span className="text-sm font-black text-emerald-400">{formatCurrency(userIncomes || 0)}</span>
+                    </div>
+                    <p className="text-[10px] text-white/30 font-medium leading-relaxed italic">
+                      {stats.viability > 50 
+                        ? "Atenção: Esta meta compromete mais da metade da sua renda. Considere estender o prazo." 
+                        : "Esta meta parece saudável para o seu orçamento atual."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-6 border border-white/5 rounded-2xl flex items-center gap-4 group hover:bg-white/5 transition-colors cursor-help">
+                   <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
+                      <Activity size={20} />
+                   </div>
+                   <div>
+                      <p className="text-[10px] font-black uppercase text-white/40">Dica de Sucesso</p>
+                      <p className="text-[11px] font-bold text-white/80">Automatize esse aporte para o dia que seu salário cair.</p>
+                   </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

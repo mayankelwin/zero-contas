@@ -12,7 +12,7 @@ import { doc, updateDoc, addDoc, collection } from "firebase/firestore"
 import { toast } from "react-toastify"
 import { useAuth } from "@/src/context/AuthContext"
 import { useInfosGeral } from "../../hooks/transactions/useInfosGeral"
-import { LayoutGrid, Target, Activity } from "lucide-react"
+import { Activity } from "lucide-react"
 
 export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }) {
   const {
@@ -44,7 +44,6 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
         autoClose={3000} 
       />
 
-      {/* --- SEÇÃO 01: ENGINE DE CAPITAL --- */}
       <section className="space-y-12">
         <header className="flex items-end justify-between border-b border-white/[0.03] pb-6">
           <div className="space-y-2">
@@ -59,11 +58,9 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
           
         </header>
 
-        {/* LADO ESQUERDO: SUMÁRIO (Blocos de Valor) */}
-          <SummaryCards cards={InfosResume} />
+        <SummaryCards cards={InfosResume} />
 
-        {/* LADO DIREITO: GESTÃO DE ATIVOS (Cartões) */}
-          <CardsSection
+        <CardsSection
           cardsList={cardsList}
           selectedCardId={selectedCardId}
           setSelectedCardId={setSelectedCardId}
@@ -72,7 +69,6 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
         />
       </section>
 
-      {/* --- SEÇÃO 02: METAS E ALOCAÇÃO --- */}
       {favoriteGoal && (
         <section className="space-y-10">
           <div className="flex items-center gap-6">
@@ -89,7 +85,6 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
         </section>
       )}
 
-      {/* --- MODAIS (Lógica Intocada) --- */}
       {modalOpen && selectedGoal && (
         <AddAndRemoveModal
           isOpen={modalOpen}

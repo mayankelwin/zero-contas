@@ -1,6 +1,6 @@
 "use client"
 
-import { CreditCard, Plus, Search, ChevronDown } from "lucide-react"
+import { CreditCard, Plus, Search, SlidersHorizontal } from "lucide-react"
 import { toast } from "react-toastify"
 
 interface CardsHeaderProps {
@@ -23,71 +23,81 @@ export default function CardsHeader({
   onAddCard,
 }: CardsHeaderProps) {
   
-  // Função para garantir que estamos criando um NOVO cartão
   const handleAddClick = () => {
     if (cardsList.length >= 5) {
-      toast.error("Limite máximo de 5 cartões atingido.")
+      toast.error("LIMITE DE 5 ATIVOS ATINGIDO")
       return
     }
-    // Chama a função passada por props
     onAddCard()
   }
 
   return (
-    <div className="pb-6 mb-2">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-6 pb-6 border-b border-white/[0.03]">
+      <div className="flex items-end justify-between gap-4">
         
-        {/* Lado Esquerdo: Info */}
+        {/* Lado Esquerdo: Identidade do Bloco */}
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-gray-400">
-            <CreditCard size={22} strokeWidth={1.5} />
+          <div className="relative group hidden sm:block">
+            <div className="absolute inset-0 bg-white/5 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700" />
+            <div className="relative w-10 h-10 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-white/40 group-hover:text-white group-hover:border-white/20 transition-all">
+              <CreditCard size={18} strokeWidth={1.5} />
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">Meus Cartões</h3>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-              {filteredCount} de {cardsList.length} Ativos
-            </p>
+          <div className="space-y-0.5">
+            <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Gestão de Ativos</h3>
+            <h2 className="text-xl font-black text-white tracking-tighter uppercase italic">
+              Meus <span className="text-white/40 not-italic">Cartões</span>
+            </h2>
           </div>
         </div>
 
-        {/* Lado Direito: Filtros e Botão */}
-        <div className="flex items-center gap-3">
-          
-          {/* Dropdown de Ordenação Neutro */}
-          <div className="relative hidden sm:block">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="appearance-none bg-white/[0.03] border border-white/[0.05] text-xs font-bold text-gray-400 hover:text-white px-4 py-2.5 pr-10 rounded-xl outline-none cursor-pointer transition-all"
-            >
-              <option value="bank">Banco</option>
-              <option value="limit">Limite</option>
-              <option value="usage">Uso</option>
-            </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+        {/* Lado Direito: Ações rápidas */}
+        <div className="flex items-center gap-2">
+          {/* Status Counter Slim */}
+          <div className="hidden lg:flex items-center px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] mr-2">
+            <span className="text-[9px] font-black text-white/40 tracking-widest uppercase">
+              {filteredCount} / {cardsList.length}
+            </span>
           </div>
 
-          {/* Botão Adicionar - Padrão Branco Neutro */}
           <button
             onClick={handleAddClick}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-200 text-black text-xs font-extrabold rounded-xl transition-all active:scale-95 shadow-lg shadow-white/5"
+            className="group flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg transition-all active:scale-95 hover:bg-emerald-400"
           >
-            <Plus size={16} strokeWidth={3} />
-            ADICIONAR
+            <Plus size={14} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-300" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Novo</span>
           </button>
         </div>
       </div>
 
-      {/* Barra de Pesquisa Minimalista (Opcional - pode habilitar se precisar) */}
-      <div className="mt-6 relative group hidden md:block">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-white transition-colors" size={16} />
-        <input
-          type="text"
-          placeholder="Pesquisar por banco ou apelido..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-white/[0.02] border border-white/[0.05] rounded-2xl py-3 pl-12 pr-4 text-sm text-white placeholder-gray-600 outline-none focus:border-white/10 focus:bg-white/[0.04] transition-all"
-        />
+      {/* Barra de Ferramentas: Pesquisa e Filtro Integrados */}
+      <div className="flex items-center gap-3 h-10">
+        <div className="relative flex-1 h-full group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-white/40 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder="LOCALIZAR ATIVO..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-full bg-white/[0.02] border border-white/[0.05] rounded-lg pl-10 pr-4 text-[11px] font-medium text-white placeholder:text-white/10 outline-none focus:bg-white/[0.04] focus:border-white/10 transition-all tracking-wider"
+          />
+        </div>
+
+        {/* Dropdown de Ordenação Estilizado */}
+        <div className="relative h-full">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none">
+            <SlidersHorizontal size={12} />
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="h-full appearance-none bg-white/[0.02] border border-white/[0.05] text-[10px] font-black text-white/40 hover:text-white pl-9 pr-8 rounded-lg outline-none cursor-pointer transition-all uppercase tracking-widest"
+          >
+            <option value="bank" className="bg-[#161618]">Banco</option>
+            <option value="limit" className="bg-[#161618]">Limite</option>
+            <option value="usage" className="bg-[#161618]">Uso</option>
+          </select>
+        </div>
       </div>
     </div>
   )

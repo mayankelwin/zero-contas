@@ -73,7 +73,6 @@ export default function CardsSection({
   return (
     <div className="bg-[#161618] rounded-2xl border border-white/[0.03] transition-all duration-500 overflow-hidden">
       
-      {/* Header com padding reduzido */}
       {!selectedCardId && !isMobile && cardsList.length > 0 && (
         <div className="pt-6 px-6">
           <CardsHeader
@@ -88,7 +87,6 @@ export default function CardsSection({
         </div>
       )}
 
-      {/* Conteúdo Principal mais compacto */}
       {cardsList.length === 0 ? (
         <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center group">
           <div className="relative mb-4">
@@ -116,7 +114,6 @@ export default function CardsSection({
         </div>
       ) : (
         <div className="relative">
-          {/* Grid View / Carousel - Removido padding extra vertical */}
           {!selectedCardId && !isMobile && (
             <div className="pb-6">
               {filteredAndSortedCards.length === 0 ? (
@@ -139,7 +136,6 @@ export default function CardsSection({
             </div>
           )}
 
-          {/* Details View - Ajustado para ser mais fluido em telas menores */}
           {(selectedCardId || isMobile) && selectedCard && (
             <div className="w-full px-4 sm:px-6 py-4">
               <CardDetails

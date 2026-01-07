@@ -15,7 +15,8 @@ import ProfileModal, { useProfileModal } from "@/src/components/modal/CustomerMo
 import { 
   User, Mail, MapPin, Calendar, 
   Settings, ShieldCheck, Zap, 
-  ArrowUpRight, Fingerprint, Globe 
+  ArrowUpRight, Fingerprint, Globe, 
+  Wallet
 } from "lucide-react"
 
 export default function PerfilPage() {
@@ -45,20 +46,18 @@ export default function PerfilPage() {
   if (loading || !user || !userProfile) return <LoadingPage />
 
   return (
-    <div className="flex h-screen bg-[#050505] text-white selection:bg-white selection:text-black">
+    <div className="flex h-screen text-white selection:bg-white selection:text-black">
       <Sidebar />
       
       <main className="flex-1 ml-16 sm:ml-20 overflow-y-auto">
-        <Header />
 
         <div className="max-w-[1400px] mx-auto p-6 lg:p-12">
           
-          {/* HEADER DE IDENTIDADE - O CONCEITO DE 'COMMAND CENTER' */}
           <div className="flex flex-col lg:flex-row gap-12 items-start mb-16">
             
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-tr from-white/20 via-white/5 to-transparent rounded-full blur-md opacity-50"></div>
-              <div className="relative w-44 h-44 rounded-full border border-white/10 p-2 bg-[#050505]">
+              <div className="relative w-44 h-44 rounded-full border-2 p-2 ">
                 <div className="w-full h-full rounded-full bg-[#161618] flex items-center justify-center overflow-hidden border border-white/5">
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
@@ -69,7 +68,7 @@ export default function PerfilPage() {
               </div>
               <button 
                 onClick={() => openModal()}
-                className="absolute bottom-4 right-4 bg-white text-black p-2.5 rounded-full hover:rotate-90 transition-all duration-500 shadow-2xl"
+                className="absolute bottom-4 right-4 bg-white text-black p-2.5 rounded-2xl  hover:rotate-90 transition-all duration-500 shadow-2xl"
               >
                 <Settings size={18} />
               </button>
@@ -93,28 +92,14 @@ export default function PerfilPage() {
               </div>
 
               <div className="flex flex-wrap gap-8 py-6 border-y border-white/[0.03]">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">E-mail Oficial</p>
-                  <p className="text-sm font-medium">{userProfile.email}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Localização</p>
-                  <p className="text-sm font-medium">{userProfile.location}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Acesso desde</p>
-                  <p className="text-sm font-medium italic">{userProfile.joinDate}</p>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* GRID DE DASHBOARD DE PERFIL */}
           <div className="grid grid-cols-12 gap-8">
             
-            {/* COLUNA ESQUERDA: ECOSSISTEMA */}
             <div className="col-span-12 lg:col-span-4 space-y-8">
-              <div className="bg-[#161618] rounded-[3rem] p-10 border border-white/[0.03] space-y-8">
+              <div className="bg-[#161618] rounded-2xl p-10 border border-white/[0.03] space-y-8">
                 <div className="space-y-2">
                   <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em]">Biografia</h3>
                   <p className="text-gray-500 text-sm leading-relaxed font-medium">
@@ -138,13 +123,11 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            {/* COLUNA DIREITA: PATRIMÔNIO & ANALYTICS */}
             <div className="col-span-12 lg:col-span-8 space-y-8">
               
-              {/* CARD DE PATRIMÔNIO LÍQUIDO BRUTALISTA */}
-              <div className="relative overflow-hidden bg-white rounded-[3rem] p-12 text-black">
+              <div className="relative overflow-hidden bg-white rounded-2xl p-12 text-black">
                 <div className="absolute top-0 right-0 p-8">
-                  <Zap size={40} className="text-black/5" strokeWidth={3} />
+                  <Wallet size={40} className="text-black/15" strokeWidth={3} />
                 </div>
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-8">
                   <div className="space-y-2">
@@ -162,30 +145,28 @@ export default function PerfilPage() {
                 </div>
               </div>
 
-              {/* GRID DE INFO CARDS MINIMALISTAS */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-[#161618] rounded-[2.5rem] p-8 border border-white/[0.03] flex justify-between items-center group hover:bg-[#1c1c1e] transition-all">
+                <div className="bg-[#161618] rounded-2xl p-8 border border-white/[0.03] flex justify-between items-center group hover:bg-[#1c1c1e] transition-all">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Cashflow Mensal</p>
                     <p className="text-2xl font-black tracking-tighter">{formatCurrency(summary.income)}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-white group-hover:border-white/20 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-white group-hover:border-white/20 transition-all">
                     <ArrowUpRight size={20} />
                   </div>
                 </div>
 
-                <div className="bg-[#161618] rounded-[2.5rem] p-8 border border-white/[0.03] flex justify-between items-center group hover:bg-[#1c1c1e] transition-all">
+                <div className="bg-[#161618] rounded-2xl  p-8 border border-white/[0.03] flex justify-between items-center group hover:bg-[#1c1c1e] transition-all">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Custos de Operação</p>
                     <p className="text-2xl font-black tracking-tighter">{formatCurrency(summary.expenses + summary.fixedExpenses)}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-red-400 group-hover:border-red-400/20 transition-all">
+                  <div className="w-12 h-12 rounded-2xl  bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-red-400 group-hover:border-red-400/20 transition-all">
                     <ArrowUpRight size={20} className="rotate-90" />
                   </div>
                 </div>
               </div>
 
-              {/* FOOTER DE CONTA */}
               <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/[0.05]">
                 <div className="flex items-center gap-6 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
                   <span className="hover:text-white cursor-pointer transition-colors">Documentação API</span>
@@ -199,7 +180,6 @@ export default function PerfilPage() {
             </div>
           </div>
         </div>
-
         <ProfileModal isOpen={isModalOpen} onClose={closeModal} uid={user.uid} />
       </main>
     </div>

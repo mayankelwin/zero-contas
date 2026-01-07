@@ -12,6 +12,7 @@ export interface Goal {
   goalName: string
   goalValue: number
   savedAmount: number
+  goalDeadline: string;
   isPriority?: boolean
   isActive?: boolean
   isFinished?: boolean
@@ -42,6 +43,7 @@ export function useGoalsLogic() {
           goalName: data.goalName,
           goalValue: Number(data.goalValue ?? 0),
           savedAmount: Number(data.savedAmount ?? 0),
+          goalDeadline: data.goalDeadline ?? "",
           isPriority: data.isPriority ?? false,
           isActive: data.isActive ?? true,
           isFinished: data.isFinished ?? false,
@@ -119,6 +121,24 @@ export function useGoalsLogic() {
     }
   }
 
+  const updateGoal = async (goalId: string, data: Partial<Goal>) => {
+  if (!user) return;
+    try {
+      const goalRef = doc(db, "users", user.uid, "goals", goalId);
+      
+      const updateData: any = { ...data };
+
+      if (data.goalValue) updateData.goalValue = Number(data.goalValue);
+      
+      await updateDoc(goalRef, updateData);
+      
+      toast.success("Objetivo atualizado!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao atualizar os dados.");
+    }
+  };
+
   return {
     user,
     loading,
@@ -128,5 +148,6 @@ export function useGoalsLogic() {
     finishGoal,
     deleteGoal,
     router,
+    updateGoal,
   }
 }
