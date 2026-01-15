@@ -1,4 +1,7 @@
+"use client"
+
 import { useState, useEffect } from "react"
+import { Wallet, Plus } from "lucide-react"
 import CardDetails from "./CardDetails"
 import EmptyState from "./EmptyState"
 import CardsCarousel from "./CardsCarousel"
@@ -48,10 +51,8 @@ export default function CardsSection({
     showRightScroll,
     handlePrev,
     handleNext,
-    isDragging,
     setIsDragging,
     isAnimating,
-    setIsAnimating,
     handleCardClick,
     handleMouseDown,
     handleMouseMove,
@@ -61,56 +62,82 @@ export default function CardsSection({
     scrollLeft,
     scrollRight,
   } = useCardsLogic(cardsList, selectedCardId, setSelectedCardId)
+  
+  const handleAddNew = () => {
+    setSelectedCardId(null); 
+    setTimeout(() => {
+      onAddCard(); 
+    }, 10);
+  };
 
   return (
-    <div className="bg-[#1E1F24] rounded-2xl shadow-lg border border-gray-800 transition-all duration-300 overflow-hidden">
-      {/* Header - só em desktop */}
-      {!selectedCardId && !isMobile && (
-        <CardsHeader
-          cardsList={cardsList}
-          filteredCount={filteredAndSortedCards.length}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          onAddCard={onAddCard}
-        />
+    <div className="bg-[#161618] rounded-2xl border border-white/[0.03] transition-all duration-500 overflow-hidden">
+      
+      {!selectedCardId && !isMobile && cardsList.length > 0 && (
+        <div className="pt-6 px-6">
+          <CardsHeader
+            cardsList={cardsList}
+            filteredCount={filteredAndSortedCards.length}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            onAddCard={handleAddNew}
+          />
+        </div>
       )}
 
-      {/* Conteúdo Principal */}
       {cardsList.length === 0 ? (
-        <div className="p-8 text-center">
-          <div className="w-48 h-48 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-            <img src="/Wallet-bro.svg" alt="Cartão" className="h-32 w-32 opacity-70" />
+        <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center group">
+          <div className="relative mb-4">
+            <div className="relative w-16 h-16 bg-white/[0.03] border border-white/[0.05] rounded-2xl flex items-center justify-center text-gray-600 group-hover:text-white transition-colors duration-500">
+              <Wallet size={28} strokeWidth={1.5} />
+            </div>
           </div>
-          <p className="text-gray-400 mb-2 text-lg">Nenhum cartão cadastrado</p>
-          <p className="text-sm text-gray-500">Adicione seu primeiro cartão para começar</p>
+          
+          <div className="space-y-1 mb-6">
+            <h3 className="text-lg font-bold text-white tracking-tight italic uppercase">
+              Sem Ativos
+            </h3>
+            <p className="text-[10px] text-gray-500 max-w-[200px] mx-auto uppercase tracking-widest font-black opacity-50">
+              Adicione cartões para iniciar o monitoramento
+            </p>
+          </div>
+
+          <button 
+            onClick={handleAddNew}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition-all active:scale-95"
+          >
+            <Plus size={14} strokeWidth={3} />
+            Novo Cartão
+          </button>
         </div>
       ) : (
         <div className="relative">
-          {/* Em mobile sempre mostrar o cartão selecionado, se houver */}
           {!selectedCardId && !isMobile && (
-            filteredAndSortedCards.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <CardsCarousel
-                cards={filteredAndSortedCards}
-                scrollLeft={scrollLeft}
-                scrollRight={scrollRight}
-                showLeftScroll={showLeftScroll}
-                showRightScroll={showRightScroll}
-                scrollContainerRef={scrollContainerRef}
-                handleMouseDown={handleMouseDown}
-                handleMouseMove={handleMouseMove}
-                handleMouseUp={handleMouseUp}
-                setIsDragging={setIsDragging}
-                handleCardClick={handleCardClick}
-              />
-            )
+            <div className="pb-6">
+              {filteredAndSortedCards.length === 0 ? (
+                <EmptyState />
+              ) : (
+                <CardsCarousel
+                  cards={filteredAndSortedCards}
+                  scrollLeft={scrollLeft}
+                  scrollRight={scrollRight}
+                  showLeftScroll={showLeftScroll}
+                  showRightScroll={showRightScroll}
+                  scrollContainerRef={scrollContainerRef}
+                  handleMouseDown={handleMouseDown}
+                  handleMouseMove={handleMouseMove}
+                  handleMouseUp={handleMouseUp}
+                  setIsDragging={setIsDragging}
+                  handleCardClick={handleCardClick}
+                />
+              )}
+            </div>
           )}
 
           {(selectedCardId || isMobile) && selectedCard && (
-            <div className="w-full px-4 sm:px-6">
+            <div className="w-full px-4 sm:px-6 py-4">
               <CardDetails
                 card={selectedCard}
                 onEdit={onEditCard}

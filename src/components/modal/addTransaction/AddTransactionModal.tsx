@@ -1,191 +1,166 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { X, DollarSign } from "lucide-react"
-import AddCardModal from "../AddCardModal"
+import { useState, useEffect, useMemo } from "react"
+import { X, Plus, Sparkles, Receipt, Wallet, Target, Repeat, Loader2 } from "lucide-react"
 import { useAddTransaction } from "../../../hooks/transactions/useAddTransaction"
 import { useCreateCard } from "../../../services/createCard"
 import TransactionForm from "./TransactionForm"
 import TransactionDetailsPanel from "./TransactionDetailsPanel"
+import { clsx } from "clsx"
 
-type TransactionType = "income" | "expense" | "fixedExpense" | "goal"
+import { TransactionType } from "../../../hooks/transactions/useAddTransaction"
 
 interface AddTransactionModalProps {
-  isOpen: boolean
-  onClose: () => void
-  defaultType: TransactionType
-  allowedTypes?: TransactionType[] | "ALL_TYPES"
+  isOpen: boolean;
+  onClose: () => void;
+  defaultType: TransactionType;
+  allowedTypes?: TransactionType[]; 
 }
 
-export default function AddTransactionModal({ isOpen, onClose, defaultType, allowedTypes = "ALL_TYPES" }: AddTransactionModalProps) {
+export default function AddTransactionModal({ 
+  isOpen, 
+  onClose, 
+  defaultType,
+  allowedTypes 
+}: AddTransactionModalProps) {
+  
   const {
     type, setType, loading, rawAmount, rawGoalValue, formData,
     handleChange, handleAmountChange, handleGoalValueChange,
-    formatCurrencyForDisplay, handleSubmit, resetForm,
-    typeIcons, typeLabels, typeColors, typeDisplayConfig, fieldConfig,
+    formatCurrencyForDisplay, handleSubmit,
+    typeLabels, typeDisplayConfig, fieldConfig,
   } = useAddTransaction(defaultType)
 
-  const {
-    cardsList, handleAddCard, selectedCard, installments,
-    setInstallments, setSelectedCard,
-  } = useCreateCard()
+  const { cardsList, selectedCard, installments, setInstallments, setSelectedCard } = useCreateCard()
+  const [showDetails, setShowDetails] = useState(false)
 
-  const [isCardModalOpen, setIsCardModalOpen] = useState(false)
-  const [showDetailsPanel, setShowDetailsPanel] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [subscriptionType, setSubscriptionType] = useState("mensal")
-
-  const usedCredit = selectedCard?.usedCredit || 0
-  const creditLimit = selectedCard?.creditLimit || 1
-  const cfg = fieldConfig[type] ?? fieldConfig.income
-
-  // Detectar dispositivo mobile
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  // Reset form ao abrir modal
-  useEffect(() => { if (isOpen) { resetForm(); setShowDetailsPanel(false) } }, [isOpen, defaultType])
-
-  // Atualiza o cartão selecionado
-  useEffect(() => { if (selectedCard?.id) handleChange("card", selectedCard.id) }, [selectedCard])
+  // Filtra as opções da sidebar lateral caso existam tipos permitidos específicos
+  const filteredDisplayConfig = useMemo(() => {
+    if (!allowedTypes || allowedTypes.length === 0) return typeDisplayConfig;
+    return typeDisplayConfig.filter(t => allowedTypes.includes(t.key as TransactionType));
+  }, [typeDisplayConfig, allowedTypes]);
 
   useEffect(() => {
-  const hasRelevantInfo = (() => {
-    if (type === "expense") {
-      return selectedCard && installments > 1 && rawAmount
-    }
-    if (type === "goal") {
-      return !!rawGoalValue
-    }
-    if (type === "income") {
-      return !!rawAmount
-    }
-    if (type === "fixedExpense") {
-      return !!subscriptionType
-    }
-    return Object.values(formData).some(value => value)
-  })()
+    setShowDetails(!!rawAmount || !!rawGoalValue)
+  }, [rawAmount, rawGoalValue])
 
-  setShowDetailsPanel(!!hasRelevantInfo)
-}, [type, selectedCard, installments, rawAmount, rawGoalValue, formData])
-
-
-  const handleTypeChange = useCallback((newType: TransactionType) => {
-    resetForm()
-    setType(newType)
-    setShowDetailsPanel(false)
-    setSelectedCard(null)
-    setInstallments(1)
-    if (newType !== "fixedExpense") setSubscriptionType("mensal")
-  }, [resetForm, setType, setSelectedCard, setInstallments])
-
-  if (!isOpen) return null
-
-  const availableTypes = allowedTypes === "ALL_TYPES"
-    ? typeDisplayConfig
-    : typeDisplayConfig.filter(t => allowedTypes.includes(t.key as TransactionType))
-
-  const cardsWithUniqueIds = cardsList.map((card, i) => ({ ...card, uniqueId: `${card.cardNumber}-${card.bank}-${i}` }))
+  if (!isOpen) return null;
+  if (type === "balance") return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4 overflow-y-auto animate-fadeIn">
-      <div className="flex gap-6 w-full max-w-7xl justify-center transition-all duration-500">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-500" onClick={onClose} />
+
+      <div className={clsx(
+        "relative flex w-full transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] items-center justify-center",
+        showDetails ? "max-w-6xl gap-6" : "max-w-3xl"
+      )}>
         
-        {/* Modal principal */}
-        <div className={`bg-gradient-to-br from-[#1E1F24] to-[#2A2B32] text-white rounded-3xl shadow-2xl max-h-[90vh] overflow-auto relative border border-gray-700/50
-          ${showDetailsPanel && !isMobile ? 'w-full max-w-md lg:max-w-lg xl:max-w-xl' : 'w-full max-w-2xl'} transition-all duration-500`}>
-          
-          {/* Header */}
-          <div className={`bg-gradient-to-r ${typeColors[type]} p-6 rounded-t-3xl sticky top-0 z-10`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">{typeIcons[type]}</div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{typeLabels[type]}</h2>
-                  <p className="text-white/80 text-sm">
-                    {type === 'income' ? 'Adicione uma nova entrada de dinheiro' :
-                     type === 'expense' ? 'Registre uma despesa do dia a dia' :
-                     type === 'fixedExpense' ? 'Cadastre uma despesa recorrente' :
-                     'Defina um novo objetivo financeiro'}
-                  </p>
-                </div>
+        {/* Sidebar de Seleção de Tipo (Filtrada) */}
+        <div className="hidden sm:flex flex-col gap-3 p-2 bg-white/[0.02] border border-white/[0.05] rounded-3xl backdrop-blur-md self-center z-10 shadow-2xl">
+          {filteredDisplayConfig.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setType(t.key as TransactionType)}
+              className={clsx(
+                "p-4 rounded-2xl transition-all duration-500 group relative",
+                type === t.key 
+                  ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
+                  : "text-gray-500 hover:text-white hover:bg-white/5"
+              )}
+            >
+              {t.key === 'income' && <Wallet size={20} />}
+              {t.key === 'expense' && <Receipt size={20} />}
+              {t.key === 'fixedExpense' && <Repeat size={20} />}
+              {t.key === 'goal' && <Target size={20} />}
+              
+              <span className="absolute right-full mr-4 px-3 py-1.5 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl translate-x-2 group-hover:translate-x-0 whitespace-nowrap">
+                {t.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 bg-[#09090b] border border-white/[0.08] rounded-[2.5rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col min-h-[600px]">
+          <div className="p-8 pb-0 flex justify-between items-start">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Entry Terminal</span>
               </div>
-              <button onClick={onClose} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-300 backdrop-blur-sm">
-                <X size={22} className="text-white" />
-              </button>
+              <h2 className="text-3xl font-black text-white tracking-tighter">
+                {typeLabels[type]} <span className="text-white/20">/01</span>
+              </h2>
             </div>
+            <button 
+              onClick={onClose} 
+              className="p-3 rounded-full bg-white/[0.03] border border-white/[0.05] text-gray-500 hover:text-white hover:rotate-90 transition-all duration-500"
+            >
+              <X size={20} />
+            </button>
           </div>
 
-          <div className="p-6">
-            {/* Tabs de tipo */}
-            {availableTypes.length > 1 && (
-              <div className="flex bg-gray-800/50 rounded-2xl p-1 mb-8 backdrop-blur-sm">
-                {availableTypes.map(({ key, label, icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => handleTypeChange(key as TransactionType)}
-                    className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 flex-1 justify-center text-center ${
-                      type === key
-                        ? `bg-gradient-to-r ${typeColors[key]} text-white shadow-lg scale-105`
-                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                    }`}
-                  >{icon}{label}</button>
-                ))}
+          <div className="p-8 flex-1">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onClose) }} className="h-full flex flex-col justify-between">
+              <div className="py-6">
+                <TransactionForm
+                  type={type} 
+                  formData={formData} 
+                  handleChange={handleChange}
+                  rawAmount={rawAmount} 
+                  rawGoalValue={rawGoalValue}
+                  handleAmountChange={handleAmountChange} 
+                  handleGoalValueChange={handleGoalValueChange}
+                  cfg={fieldConfig[type] || {}} 
+                  selectedCard={selectedCard} 
+                  setSelectedCard={setSelectedCard}
+                  cardsWithUniqueIds={cardsList}
+                  installments={installments} 
+                  setInstallments={setInstallments}
+                  subscriptionType="mensal" 
+                  setSubscriptionType={() => {}}
+                />
               </div>
-            )}
 
-            {/* Formulário */}
-            <form onSubmit={e => { e.preventDefault(); handleSubmit(onClose) }} className="space-y-6">
-              <TransactionForm
-                type={type} formData={formData} handleChange={handleChange}
-                rawAmount={rawAmount} rawGoalValue={rawGoalValue}
-                handleAmountChange={handleAmountChange} handleGoalValueChange={handleGoalValueChange}
-                cfg={cfg} selectedCard={selectedCard} setSelectedCard={setSelectedCard}
-                cardsWithUniqueIds={cardsWithUniqueIds} installments={installments} setInstallments={setInstallments}
-                subscriptionType={subscriptionType} setSubscriptionType={setSubscriptionType}
-              />
-
-              {/* Botões */}
-              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-700/50">
-                <button type="button" onClick={onClose} className="px-6 py-3 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-300 backdrop-blur-sm">
-                  Cancelar
-                </button>
-                <button type="submit" disabled={loading} className={`px-6 py-3 rounded-xl bg-gradient-to-r ${typeColors[type]} hover:shadow-lg text-white font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2`}>
-                  {loading ? (
-                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Salvando...</>
-                  ) : (
-                    <><DollarSign size={16} />Salvar {type === 'income' ? 'Receita' : type === 'goal' ? 'Meta' : 'Despesa'}</>
-                  )}
+              <div className="flex items-center justify-between pt-8 border-t border-white/[0.05]">
+                <div className="flex items-center gap-4 text-white/30">
+                  <Sparkles size={16} className="animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Protocolo Seguro</span>
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group relative flex items-center gap-3 bg-white text-black px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:pr-14 active:scale-95 disabled:opacity-20"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : "Registrar"}
+                  <Plus className="absolute right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" size={18} strokeWidth={3} />
                 </button>
               </div>
             </form>
           </div>
         </div>
 
-        {/* Painel de detalhes */}
-        {showDetailsPanel && (
-          <TransactionDetailsPanel
-            type={type} formData={formData} selectedCard={selectedCard} installments={installments}
-            rawAmount={rawAmount} rawGoalValue={rawGoalValue} formatCurrencyForDisplay={formatCurrencyForDisplay}
-            usedCredit={usedCredit} creditLimit={creditLimit} isMobile={isMobile} setShowDetailsPanel={setShowDetailsPanel}
-            cfg={cfg}
-          />
+        {showDetails && (
+          <div className="hidden lg:block w-[400px] h-full animate-in slide-in-from-right-10 fade-in duration-1000">
+            <TransactionDetailsPanel
+              type={type} 
+              formData={formData} 
+              selectedCard={selectedCard} 
+              installments={installments}
+              rawAmount={rawAmount} 
+              rawGoalValue={rawGoalValue} 
+              formatCurrencyForDisplay={formatCurrencyForDisplay}
+              usedCredit={selectedCard?.usedCredit || 0} 
+              creditLimit={selectedCard?.creditLimit || 0} 
+              isMobile={false} 
+              setShowDetailsPanel={() => {}}
+              cfg={fieldConfig[type]}
+            />
+          </div>
         )}
       </div>
-
-      {/* Modal de cartão */}
-      <AddCardModal
-        isOpen={isCardModalOpen}
-        onClose={() => setIsCardModalOpen(false)}
-        onSubmit={async cardData => {
-          const createdCard = await handleAddCard(cardData)
-          if (createdCard) { setSelectedCard(createdCard); setIsCardModalOpen(false) }
-        }}
-      />
     </div>
   )
 }

@@ -11,10 +11,8 @@ export const ICONS_MAP: Record<string, React.ElementType> = {
 }
 
 export const getTransactionIcon = (item: CardItem): JSX.Element => {
-  const amount = item.amount ?? 0
   const title = item.title?.toLowerCase() ?? ""
 
-  // Ícone para transações de entrada (income)
   if (item.type === "income") {
     return (
       <div className="p-1  rounded-full text-green-400">
@@ -23,7 +21,6 @@ export const getTransactionIcon = (item: CardItem): JSX.Element => {
     )
   }
 
-  // Ícones específicos para despesas (expense) com base no título
   if (item.type === "expense") {
     if (title.includes("mercado")) {
       return (
@@ -39,7 +36,6 @@ export const getTransactionIcon = (item: CardItem): JSX.Element => {
         </div>
       )
     }
-    // Ícone padrão para despesa: seta para baixo com fundo vermelho
     return (
       <div className="p-1 rounded-full text-red-400">
         <ArrowDownRight size={18} />
@@ -47,7 +43,6 @@ export const getTransactionIcon = (item: CardItem): JSX.Element => {
     )
   }
 
-  // Caso não seja income nem expense, fallback com seta para baixo vermelho
   return (
     <div className="p-1 bg-red-600/20 rounded-full text-red-400">
       <ArrowDownLeft size={18} />

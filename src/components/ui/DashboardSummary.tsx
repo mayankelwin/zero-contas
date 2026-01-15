@@ -12,6 +12,7 @@ import { doc, updateDoc, addDoc, collection } from "firebase/firestore"
 import { toast } from "react-toastify"
 import { useAuth } from "@/src/context/AuthContext"
 import { useInfosGeral } from "../../hooks/transactions/useInfosGeral"
+import { Activity } from "lucide-react"
 
 export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }) {
   const {
@@ -32,18 +33,33 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
     handleDeleteCard
   } = useFinanceData(reloadFlag)
 
-  const {
-    InfosResume
-  } = useInfosGeral()
-  
+  const { InfosResume } = useInfosGeral()
   const { user } = useAuth()
   
   return (
-    <>
-      <ToastContainer position="top-right" autoClose={3000} />
+    <div className="space-y-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <ToastContainer 
+        toastClassName={() => "bg-[#161618] text-white font-black uppercase text-[10px] tracking-widest p-4 rounded-2xl shadow-2xl"}
+        position="top-right" 
+        autoClose={3000} 
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className="space-y-12">
+        <header className="flex items-end justify-between border-b border-white/[0.03] pb-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-emerald-500">
+              <Activity size={14} strokeWidth={3} />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em]">sua vida finaceira</span>
+            </div>
+            <h2 className="text-4xl font-black tracking-tighter uppercase italic">
+              Dashboard <span className="text-white/10 not-italic">Financeiro</span>
+            </h2>
+          </div>
+          
+        </header>
+
         <SummaryCards cards={InfosResume} />
+
         <CardsSection
           cardsList={cardsList}
           selectedCardId={selectedCardId}
@@ -51,13 +67,22 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
           onAddCard={() => setAddCardOpen(true)}
           onEditCard={handleEditCard}
         />
-      </div>
+      </section>
 
       {favoriteGoal && (
-        <FavoriteGoal
-          goal={favoriteGoal}
-          onOpenModal={(goal) => { setSelectedGoal(goal); setModalOpen(true) }}
-        />
+        <section className="space-y-10">
+          <div className="flex items-center gap-6">
+            <h2 className="text-2xl font-black tracking-tighter uppercase italic">
+              AS suas <span className="text-white/20"> Metas</span>
+            </h2>
+            <div className="h-[1px] flex-1 bg-gradient-to-r from-white/[0.05] to-transparent"></div>
+          </div>
+
+              <FavoriteGoal
+                goal={favoriteGoal}
+                onOpenModal={(goal) => { setSelectedGoal(goal); setModalOpen(true) }}
+              />
+        </section>
       )}
 
       {modalOpen && selectedGoal && (
@@ -67,7 +92,6 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
           defaultType="income"
           onSave={async (data) => {
             if (!user || !selectedGoal) return
-
             const amount = Number(data.amount) / 100 
             const goalRef = doc(db, "users", user.uid, "goals", selectedGoal.id)
             const userRef = doc(db, "users", user.uid)
@@ -79,29 +103,25 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
               if (data.transactionType === "income") {
                 newSaved = (selectedGoal.savedAmount ?? 0) + amount
                 diff = amount
-                toast.success(`Adicionado R$${amount.toFixed(2)} à meta ${selectedGoal.goalName}`)
+                toast.success(`SISTEMA: ENTRADA DE R$${amount.toFixed(2)}`)
               } else {
                 newSaved = Math.max((selectedGoal.savedAmount ?? 0) - amount, 0)
                 diff = -amount
-                toast.success(`Retirado R$${amount.toFixed(2)} da meta ${selectedGoal.goalName}`)
+                toast.error(`SISTEMA: SAÍDA DE R$${amount.toFixed(2)}`)
               }
 
-              // Atualiza o valor salvo da meta
               await updateDoc(goalRef, { savedAmount: newSaved })
-
-              // Atualiza o saldo geral de metas no documento do usuário
               await updateDoc(userRef, {
                 saldoMetas: diff > 0 
                   ? (selectedGoal.saldoMetas ?? 0) + diff 
                   : Math.max((selectedGoal.saldoMetas ?? 0) + diff, 0)
               })
 
-              // Registra a transação
               await addDoc(collection(db, "users", user.uid, "transactions"), {
                 amount,
                 type: data.transactionType === "income" ? "income" : "expense",
                 category: "meta",
-                description: `${data.transactionType === "income" ? "Adicionado" : "Retirado"} da meta ${selectedGoal.goalName}`,
+                description: `Operação em Meta: ${selectedGoal.goalName}`,
                 createdAt: new Date().toISOString(),
                 goalId: selectedGoal.id,
                 goalName: selectedGoal.goalName
@@ -110,7 +130,7 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
               setModalOpen(false)
             } catch (err) {
               console.error(err)
-              toast.error("Erro ao atualizar a meta")
+              toast.error("ERRO CRÍTICO DE SINCRONIZAÇÃO")
             }
           }}
         />
@@ -125,6 +145,6 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
           onDelete={editCardData ? handleDeleteCard : undefined}
         />
       )}
-    </>
+    </div>
   )
 }

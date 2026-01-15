@@ -3,13 +3,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
-import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc } from "firebase/firestore"
+import { collection,onSnapshot, getDocs, deleteDoc, doc } from "firebase/firestore"
 
 import { db } from "@/src/lib/firebase"
 import { useAuth } from "@/src/context/AuthContext"
 import { useCategoryChartData } from "@/src/hooks/useCategoryChartData"
 import { CardItem } from "@/src/types/transactions"
-import AddTransactionModal from "@/src/components/modal/addTransaction/AddTransactionModal"
 
 export function useHomeLogic() {
   const router = useRouter()
@@ -17,7 +16,7 @@ export function useHomeLogic() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [transactionType, setTransactionType] = useState<"income" | "expense" | null>(null)
+  const [transactionType, setTransactionType] = useState<"income" | "expense" | "fixedExpense" | "goal" | null>(null)
   const [reloadFlag, setReloadFlag] = useState(0)
   const [summaryData, setSummaryData] = useState({ income: 0, expenses: 0, fixedExpenses: 0, savedAmount: 0 })
   const [transactions, setTransactions] = useState<CardItem[]>([])
@@ -25,15 +24,13 @@ export function useHomeLogic() {
 
   const categoryChartData = useCategoryChartData()
 
-  // Redirect se não autenticado
   useEffect(() => {
     if (!loading && !user) {
       router.push("/auth")
     }
   }, [loading, user, router])
 
-  // Modal
-  const handleSelectType = useCallback((type: "income" | "expense") => {
+  const handleSelectType = useCallback((type: "income" | "expense" | "goal" | "fixedExpense") => { 
     setTransactionType(type)
     setIsModalOpen(true)
      setTimeout(() => {
@@ -47,76 +44,76 @@ export function useHomeLogic() {
     setIsModalOpen(false)
   }, [])
 
-  // 🔹 Resumo do Firebase e transações recentes
-    useEffect(() => {
-    if (!user) return
+  useEffect(() => {
+  if (!user) return
 
-    const transactionsQuery = collection(db, "users", user.uid, "transactions")
-    const subscriptionsQuery = collection(db, "users", user.uid, "subscriptions")
-    const goalsQuery = collection(db, "users", user.uid, "goals")
+  const transactionsQuery = collection(db, "users", user.uid, "transactions")
+  const subscriptionsQuery = collection(db, "users", user.uid, "subscriptions")
+  const goalsQuery = collection(db, "users", user.uid, "goals")
 
-    
-    // Transações normais
-    const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
-      const txns: CardItem[] = []
-
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data() as CardItem
-        txns.push({ id: docSnap.id, ...data })
-      })
+  const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
+    const txns: CardItem[] = snapshot.docs.map(docSnap => ({
+        ...(docSnap.data() as CardItem),
+        id: docSnap.id,
+      }));
 
       setTransactions(prev => {
-        // remove antigas "income/expense" para evitar duplicatas
-        const filteredPrev = prev.filter(t => t.type !== "income" && t.type !== "expense")
-        return [...filteredPrev, ...txns]
-      })
+        const filteredPrev = prev.filter(t => t.type !== "income" && t.type !== "expense");
+        return [...filteredPrev, ...txns];
+      });
 
-      const income = txns.filter(t => t.type === "income").reduce((acc, t) => acc + Number(t.amount ?? 0), 0)
-      const expenses = txns.filter(t => t.type === "expense").reduce((acc, t) => acc + Number(t.amount ?? 0), 0)
-      setSummaryData(prev => ({ ...prev, income, expenses }))
+      const income = txns
+        .filter(t => t.type === "income")
+        .reduce((acc, t) => acc + Number(t.amount ?? 0), 0);
+        
+      const expenses = txns
+        .filter(t => t.type === "expense")
+        .reduce((acc, t) => acc + Number(t.amount ?? 0), 0);
+
+      setSummaryData(prev => ({ ...prev, income, expenses }));
+  });
+
+  const unsubscribeSubscriptions = onSnapshot(subscriptionsQuery, (snapshot) => {
+    const subs: CardItem[] = snapshot.docs.map(docSnap => {
+      const data = docSnap.data() as Omit<CardItem, 'id'>; 
+      
+      return {
+        ...data,
+        id: docSnap.id,       
+        type: "fixedExpense" 
+      } as CardItem;
+    });
+
+    setTransactions(prev => {
+      const filteredPrev = prev.filter(t => t.type !== "fixedExpense");
+      return [...filteredPrev, ...subs];
+    });
+
+    const fixedExpenses = subs.reduce((acc, s) => acc + Number(s.value ?? 0), 0);
+    setSummaryData(prev => ({ ...prev, fixedExpenses }));
+  });
+
+  const unsubscribeGoals = onSnapshot(goalsQuery, (snapshot) => {
+    const goalsArr: any[] = []
+    let savedAmountTotal = 0
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data()
+      goalsArr.push({ id: docSnap.id, ...data })
+      savedAmountTotal += Number(data.savedAmount ?? 0)
     })
 
-    // Subscriptions
-    const unsubscribeSubscriptions = onSnapshot(subscriptionsQuery, (snapshot) => {
-      const subs: CardItem[] = []
+    setGoals(goalsArr)
+    setSummaryData(prev => ({ ...prev, savedAmount: savedAmountTotal }))
+  })
 
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data() as CardItem
-        subs.push({ id: docSnap.id, ...data, type: "fixedExpense" })
-      })
-
-      setTransactions(prev => {
-        const filteredPrev = prev.filter(t => t.type !== "fixedExpense")
-        return [...filteredPrev, ...subs]
-      })
-
-      const fixedExpenses = subs.reduce((acc, s) => acc + Number(s.value ?? 0), 0)
-      setSummaryData(prev => ({ ...prev, fixedExpenses }))
-    })
-
-    const unsubscribeGoals = onSnapshot(goalsQuery, (snapshot) => {
-      const goalsArr: any[] = []
-      let savedAmountTotal = 0
-
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data()
-        goalsArr.push({ id: docSnap.id, ...data })
-        savedAmountTotal += Number(data.savedAmount ?? 0)
-      })
-
-      setGoals(goalsArr)
-      setSummaryData(prev => ({ ...prev, savedAmount: savedAmountTotal }))
-    })
-
-    return () => {
+  return () => {
       unsubscribeTransactions()
       unsubscribeSubscriptions()
       unsubscribeGoals()
     }
   }, [user])
 
-
-  // Deletar todos os dados do usuário
   const handleDeleteAllData = useCallback(async () => {
     if (!user) return
 
@@ -129,7 +126,6 @@ export function useHomeLogic() {
       const collections = ["transactions", "subscriptions", "goals", "cards"]
 
       for (const colName of collections) {
-        // Acessa cada subcoleção dentro do documento do usuário
         const colRef = collection(db, "users", user.uid, colName)
         const snapshot = await getDocs(colRef)
 
@@ -146,36 +142,24 @@ export function useHomeLogic() {
     }
   }, [user])
 
-  // Dados para gráfico (incluindo saldo de metas)
-  const spendingData = useMemo(() => ({
-    labels: ["Receitas", "Despesas", "Despesas Fixas", "Saldo Metas"],
-    datasets: [
-      {
-        label: "Valores (R$)",
-        data: [
-          summaryData.income,
-          summaryData.expenses,
-          summaryData.fixedExpenses,
-          summaryData.savedAmount ?? 0
-        ],
-        backgroundColor: ["#10b981", "#ef4444", "#f59e0b", "#8b5cf6"],
-        borderWidth: 1,
-      },
-    ],
-  }), [summaryData])
+  const spendingData = useMemo(() => [
+    { label: "Receitas", amount: summaryData.income },
+    { label: "Despesas", amount: summaryData.expenses },
+    { label: "Assinaturas", amount: summaryData.fixedExpenses },
+    { label: "Metas", amount: summaryData.savedAmount ?? 0 }
+  ], [summaryData]);
 
-  // 🔹 Transações recentes incluindo metas
-    const recentTransactions = useMemo(() => [
-      ...transactions,
-      ...goals.map(goal => ({
-        id: goal.id,
-        amount: goal.savedAmount ?? 0,
-        type: "income",
-        category: "meta",
-        description: `Saldo guardado da meta: ${goal.goalName}`,
-        createdAt: goal.updatedAt ?? new Date().toISOString(),
-      }))
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [transactions, goals])
+  const recentTransactions = useMemo(() => [
+    ...transactions,
+    ...goals.map(goal => ({
+      id: goal.id,
+      amount: goal.savedAmount ?? 0,
+      type: "income",
+      category: "meta",
+      description: `Saldo guardado da meta: ${goal.goalName}`,
+      createdAt: goal.updatedAt ?? new Date().toISOString(),
+    }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [transactions, goals])
 
   return {
     user,

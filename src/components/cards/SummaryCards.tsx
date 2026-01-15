@@ -1,62 +1,65 @@
-import { formatCurrency } from "@/src/utils/formatCurrency"
+"use client"
 
-interface Card {
+import { formatCurrency } from "@/src/utils/formatCurrency"
+import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { ElementType } from "react"
+
+export interface SummaryCardData {
   label: string
   value: number
-  icon: any
-  color: string
-  valueColor: string
+  icon: ElementType
+  color?: string 
+  valueColor?: string
   subtitle?: string
   change?: string
-  changeType?: 'positive' | 'negative' | 'neutral'
+  changeType?: 'positive' | 'negative' | 'neutral' | string 
 }
 
 interface SummaryCardsProps {
-  cards: Card[]
+  cards: SummaryCardData[]
 }
 
 export default function SummaryCards({ cards }: SummaryCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
-      {cards.map((card, index) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {cards.map((card) => (
         <div
           key={card.label}
-          className="bg-[#1E1F24] rounded-2xl p-6 shadow-lg border justify-between h-full border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl"
+          className="group relative bg-[#161618] hover:bg-[#111111] p-5 transition-all duration-500 overflow-hidden rounded-2xl"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
-              {card.label}
-            </h3>
-            <div className={`p-2 rounded-lg ${card.color} bg-opacity-20`}>
-              <card.icon className="w-5 h-5" />
+          {/* Indicador lateral sutil no hover */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-0 group-hover:h-1/2 bg-white transition-all duration-500" />
+
+          <div className="relative z-10 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-white/20 group-hover:text-white transition-colors duration-500">
+                  <card.icon size={16} strokeWidth={2} />
+                </div>
+                <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.25em] group-hover:text-white/60 transition-colors">
+                  {card.label}
+                </h3>
+              </div>
+              
+              {card.change && (
+                <div className={`text-[9px] font-black italic tracking-tighter ${
+                  card.changeType === 'positive' ? 'text-emerald-500' : 
+                  card.changeType === 'negative' ? 'text-red-500' : 'text-white/20'
+                }`}>
+                  {card.changeType === 'positive' && "+"}
+                  {card.change}
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Main Value */}
-          <div className="mb-3">
-            <p className={`text-3xl font-bold ${card.valueColor}`}>
-              {formatCurrency(card.value ?? 0)}
-            </p>
-          </div>
-
-          {/* Subtitle and Change */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              {card.subtitle || "Esse mês"}
-            </span>
-            
-            {card.change && (
-              <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                card.changeType === 'positive' 
-                  ? 'bg-green-500/20 text-green-400' 
-                  : card.changeType === 'negative'
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'bg-gray-500/20 text-gray-400'
-              }`}>
-                {card.change}
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-2xl font-black text-white tracking-tighter uppercase">
+                {formatCurrency(card.value ?? 0)}
+              </h2>
+              <span className="text-[8px] font-bold text-white/10 uppercase tracking-widest hidden xl:block">
+                Total Net
               </span>
-            )}
+            </div>
           </div>
         </div>
       ))}
