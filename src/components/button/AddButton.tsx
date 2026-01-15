@@ -5,7 +5,6 @@ import { Plus } from "lucide-react"
 import { DollarSign, CreditCard, Target, Archive } from "lucide-react"
 import { clsx } from "clsx"
 
-// Tipagem rigorosa para as opções
 type TransactionType = "income" | "expense" | "goal" | "fixedExpense"
 
 interface Option {
@@ -29,7 +28,6 @@ export default function AddButtonWithMenu({ onSelect }: AddButtonWithMenuProps) 
     { label: "Meta", type: "goal", icon: <Target size={18} /> },
   ]
 
-  // Fechar ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -47,7 +45,6 @@ export default function AddButtonWithMenu({ onSelect }: AddButtonWithMenuProps) 
 
   return (
     <div className="fixed bottom-8 right-8 z-[100]" ref={menuRef}>
-      {/* Menu Superior */}
       <div
         className={clsx(
           "absolute bottom-20 right-0 w-52 py-2 mb-2 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] origin-bottom-right",
@@ -73,7 +70,6 @@ export default function AddButtonWithMenu({ onSelect }: AddButtonWithMenuProps) 
         </div>
       </div>
 
-      {/* Botão Principal Neutro */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={clsx(
@@ -93,7 +89,6 @@ export default function AddButtonWithMenu({ onSelect }: AddButtonWithMenuProps) 
         />
       </button>
 
-      {/* Overlay sutil ao abrir */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] -z-10 transition-opacity" />
       )}

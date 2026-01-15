@@ -47,8 +47,7 @@ export function useCreateCard() {
     return () => unsub()
   }, [user])
 
-  // CRUD cartões
-   const handleAddCard = async (data: any) => {
+  const handleAddCard = async (data: any) => {
     if (!user) return null
     try {
       const docRef = await addDoc(collection(db, "users", user.uid, "cards"), {
@@ -104,6 +103,7 @@ export function useCreateCard() {
     setSelectedCard(null)
     setInstallments(1)
   }
+  
   return {
     addCardOpen,
     selectedCardId,
