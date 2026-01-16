@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../hooks/useAuth"
-import { collection, query, onSnapshot } from "firebase/firestore"
+import { collection, onSnapshot } from "firebase/firestore"
 import { db } from "../lib/firebase"
 
 interface ChartData {
