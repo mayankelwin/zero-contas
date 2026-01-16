@@ -25,7 +25,6 @@ const Header: React.FC = () => {
   return (
     <header className="flex justify-between items-center px-8 py-6 w-full bg-transparent">
       
-      {/* Search Command - Estilo Spotlight */}
       <div className="flex-1 max-w-xl relative group">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
           <Command size={14} className="text-white/20 group-focus-within:text-emerald-500 transition-colors" />
@@ -41,10 +40,8 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Profile & Session */}
       <div className="flex items-center gap-8 ml-8">
         
-        {/* User Info - Slim */}
         <div className="hidden md:flex flex-col items-end">
           <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">
             {userName}
@@ -54,13 +51,11 @@ const Header: React.FC = () => {
           </span>
         </div>
 
-        {/* Avatar & Dropdown Simulado */}
         <div className="flex items-center gap-3">
           <button
             onClick={handlePerfil}
             className="relative group p-1 rounded-full"
           >
-            {/* Anel de brilho no hover */}
             <div className="absolute inset-0 bg-emerald-500 rounded-full blur-md opacity-0 group-hover:opacity-30 transition-opacity duration-500" />
             
             <div className="relative w-11 h-11 rounded-full bg-[#111111] border-2 border-white/5 group-hover:border-white/20 overflow-hidden transition-all">
@@ -82,7 +77,6 @@ const Header: React.FC = () => {
             <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
           </button>
         </div>
-
       </div>
     </header>
   )

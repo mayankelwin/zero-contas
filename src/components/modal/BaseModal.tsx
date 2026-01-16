@@ -28,7 +28,6 @@ export default function BaseModal({
   return (
     <div className="fixed inset-0 bg-[#1E1F24]/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fadeIn">
       <div className="bg-[#1E1F24] text-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto p-6 relative animate-slideUp">
-        {/* Close */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-700 transition"
@@ -36,7 +35,6 @@ export default function BaseModal({
           <X size={24} />
         </button>
 
-        {/* Title */}
         <h2 className="text-2xl font-bold mb-6 text-center">{title}</h2>
 
         {children}

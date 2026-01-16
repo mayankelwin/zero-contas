@@ -6,7 +6,6 @@ import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc
 import { useAuth } from "@/src/context/AuthContext"
 import { toast } from "react-toastify"
 
-// 🔹 Função utilitária para filtrar transações por mês
 const getTransactionsByMonth = (transactions: any[], monthOffset: number = 0) => {
   const now = new Date()
   const targetDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1)
@@ -21,7 +20,6 @@ const getTransactionsByMonth = (transactions: any[], monthOffset: number = 0) =>
 export function useFinanceData(reloadFlag?: number) {
   const { user } = useAuth()
 
-  // 🔹 Estados principais
   const [summary, setSummary] = useState({ 
     total: 0, 
     income: 0, 
@@ -39,7 +37,6 @@ export function useFinanceData(reloadFlag?: number) {
   const [editCardData, setEditCardData] = useState<any>(null)
   const [allTransactions, setAllTransactions] = useState<any[]>([])
 
-  // 🔹 Buscar meta favorita
   useEffect(() => {
     if (!user) return
 
@@ -86,7 +83,6 @@ export function useFinanceData(reloadFlag?: number) {
     return () => unsubscribeFavorite()
   }, [user])
 
-  // 🔹 Buscar todas as transações
   useEffect(() => {
     if (!user) return
     const transactionsRef = collection(db, "users", user.uid, "transactions")
@@ -125,7 +121,6 @@ export function useFinanceData(reloadFlag?: number) {
     return () => unsubscribe()
   }, [user])
 
-  // 🔹 Buscar cartões
   useEffect(() => {
     if (!user) return
     const cardsRef = collection(db, "users", user.uid, "cards")
@@ -137,7 +132,6 @@ export function useFinanceData(reloadFlag?: number) {
     return () => unsub()
   }, [user, reloadFlag])
 
-  // 🔹 CRUD cartões
   const handleAddCard = async (data: any) => {
     if (!user) return
     await addDoc(collection(db, "users", user.uid, "cards"), { ...data, createdAt: new Date().toISOString() })

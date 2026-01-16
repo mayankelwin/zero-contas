@@ -5,14 +5,13 @@ import { banks } from "@/src/data/banks"
 import { brands } from "@/src/data/brands"
 import { X, CreditCard, Trash2, Save, Info } from "lucide-react"
 
-// Tipagem aprimorada para os dados do banco e bandeira
 interface Bank {
   name: string
   color: string
 }
 
 interface CardData {
-  id?: string // Adicionado ID opcional para facilitar a manipulação
+  id?: string 
   bank: string
   color: string
   cardName: string
@@ -34,7 +33,6 @@ interface AddCardModalProps {
 }
 
 export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDelete }: AddCardModalProps) {
-  // Estados com tipagem inicial explícita
   const [bank, setBank] = useState<Bank>(banks[0])
   const [brand, setBrand] = useState<string>(brands[0].name)
   const [cardName, setCardName] = useState("")
@@ -54,7 +52,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
       setCreditLimit(editData.creditLimit)
       setBillingDay(editData.billingDay ?? 1)
     } else {
-      // Resetar para valores padrão se for uma nova criação
       setBank(banks[0])
       setBrand(brands[0].name)
       setCardName("")
@@ -93,7 +90,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-md transition-all">
       <div className="bg-[#161618] text-white rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] w-full max-w-6xl relative border border-white/[0.05] overflow-hidden max-h-[90vh] flex flex-col md:flex-row">
         
-        {/* Botão Fechar - Minimalista */}
         <button 
           onClick={onClose} 
           className="absolute top-6 right-6 hover:bg-white/10 p-2 rounded-full transition-all z-50 text-gray-400 hover:text-white"
@@ -101,7 +97,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
           <X size={20} />
         </button>
 
-        {/* Lado Esquerdo - Preview do Cartão (Estilo Galeria) */}
         <div className="w-full lg:w-[45%] p-10 bg-gradient-to-b from-white/[0.02] to-transparent flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-white/[0.05]">
           <div className="flex items-center gap-3 mb-10">
             <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400">
@@ -113,7 +108,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
             </div>
           </div>
 
-          {/* Cartão Visual - Refinado */}
           <div
             className="aspect-[1.58/1] w-full rounded-[2rem] p-8 relative overflow-hidden shadow-2xl transition-all duration-700 ease-out flex flex-col justify-between group"
             style={{ 
@@ -122,7 +116,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
                 : "linear-gradient(135deg, #27272a 0%, #09090b 100%)"
             }}
           >
-            {/* Efeitos de Vidro/Luz */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
             
             <div className="relative z-10 flex flex-col h-full">
@@ -153,7 +146,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
             </div>
           </div>
 
-          {/* Info Secundária */}
           <div className="mt-10 grid grid-cols-2 gap-4">
             <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.03]">
               <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Taxa de Juros</p>
@@ -166,7 +158,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
           </div>
         </div>
 
-        {/* Lado Direito - Formulário Clean */}
         <div className="w-full lg:w-[55%] p-10 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -261,7 +252,6 @@ export default function AddCardModal({ isOpen, onClose, onSubmit, editData, onDe
               </div>
             </div>
 
-            {/* Ações de Formulário */}
             <div className="pt-6 flex flex-col sm:flex-row gap-4">
               <button
                 type="submit"
