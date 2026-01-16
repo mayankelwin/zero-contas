@@ -91,7 +91,7 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
         firstName: formData.firstName,
         lastName: formData.lastName,
         role: formData.role,
-        salary: formData.salary, // Firebase aceita number
+        salary: formData.salary,
         jobTitle: formData.jobTitle,
         profileImage: imageUrl
       }
@@ -120,7 +120,6 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
     <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-in fade-in duration-500">
       <div className="bg-[#0a0a0a] border border-white/10 text-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)]">
         
-        {/* HEADER */}
         <div className="relative p-10 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.03] to-transparent">
           <div className="flex justify-between items-center">
             <div className="flex gap-8 items-center">
@@ -161,7 +160,6 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
           </div>
         </div>
 
-        {/* FORM BODY */}
         <div className="p-10 space-y-10 overflow-y-auto max-h-[55vh] custom-scrollbar">
           
           <div className="grid grid-cols-2 gap-10">
@@ -212,7 +210,6 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
               {isEditing ? (
                 <Input
                   type="money"
-                  // Convertendo number para string para o Input HTML
                   value={formData.salary.toString()} 
                   onChange={(val) => setFormData({ ...formData, salary: Number(val) })}
                   icon={<Wallet size={16} />}
@@ -223,7 +220,6 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
             </div>
           </div>
 
-          {/* SECURITY AREA */}
           {isEditing && (
             <div className="pt-10 border-t border-white/[0.03] space-y-6">
               {!showPasswordFields ? (
@@ -269,7 +265,6 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
           )}
         </div>
 
-        {/* FOOTER */}
         <div className="p-10 bg-white/[0.02] border-t border-white/[0.05] flex justify-end items-center gap-6">
           {isEditing ? (
             <>

@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useAuth } from "../useAuth"
 import { createTransaction } from "../../services/createTransaction"
 import { Book, CreditCard, DollarSign, Film, Gift, HeartHandshake, Home, Smartphone, Target, TrendingUp, Wallet, Wifi, Zap } from 'lucide-react';
 import { db } from "../../lib/firebase";
-import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 export interface CardData {
@@ -125,10 +125,8 @@ export function useAddTransaction(defaultType: TransactionType) {
         baseData.title = formData.name || "Assinatura"
         baseData.amount = Number(rawAmount) / 100
 
-        // Salva corretamente o tipo de despesa fixa (ex: Netflix, Curso, Financiamento)
         baseData.category = formData.category || "Outro"
 
-        // Salva o tipo de assinatura (mensal, trimestral, anual...)
         baseData.subscriptionType = formData.subscriptionType || "mensal"
 
         baseData.recurrence = formData.recurrence || "monthly"
@@ -197,7 +195,7 @@ export function useAddTransaction(defaultType: TransactionType) {
       const cardSnap = await getDoc(cardRef)
 
       if (!cardSnap.exists()) {
-        console.warn("⚠️ Cartão não encontrado com ID:", cardId)
+        console.warn("Cartão não encontrado com ID:", cardId)
         return
       }
 

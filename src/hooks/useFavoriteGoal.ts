@@ -10,7 +10,7 @@ export function useFavoriteGoal(userId?: string) {
     if (!userId) return
 
     const q = query(
-      collection(db, "users", userId, "goals"), // acessar goals dentro do usuário
+      collection(db, "users", userId, "goals"), 
       where("isPriority", "==", true)
     )
 

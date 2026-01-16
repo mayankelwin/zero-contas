@@ -53,7 +53,6 @@ export default function CardsCarousel({
         )}
       </div>
 
-      {/* Container de Scroll com Máscara de Opacidade */}
       <div
         ref={scrollContainerRef}
         style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}
@@ -70,14 +69,12 @@ export default function CardsCarousel({
             onMouseUp={(e) => handleMouseUp(e, card.id)}
             className="flex-shrink-0 transition-all duration-700 hover:scale-[1.02] group relative"
           >
-            {/* Glossy Overlay sutil fixo */}
             <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-b from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10" />
             
             <div className="relative select-none pointer-events-none sm:pointer-events-auto">
               <CardItem {...card} index={index} />
             </div>
 
-            {/* Label de Interação no Hover */}
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:bottom-2 transition-all duration-500 z-20 pointer-events-none">
               <span className="flex items-center gap-2 px-3 py-1 bg-white text-black text-[8px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl">
                 <MousePointer2 size={10} />
@@ -88,7 +85,6 @@ export default function CardsCarousel({
         ))}
       </div>
 
-      {/* Footer do Carrossel: Minimalista */}
       <div className="flex items-center justify-between px-12 mt-2">
         <div className="flex gap-1.5">
           {cards.map((_, i) => (

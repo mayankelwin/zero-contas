@@ -3,7 +3,7 @@
 import { useAuth } from "@/src/context/AuthContext"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore"
+import { collection, query, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
 import { toast } from "react-toastify"
 

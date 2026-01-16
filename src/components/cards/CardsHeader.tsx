@@ -35,7 +35,6 @@ export default function CardsHeader({
     <div className="space-y-6 pb-6 border-b border-white/[0.03]">
       <div className="flex items-end justify-between gap-4">
         
-        {/* Lado Esquerdo: Identidade do Bloco */}
         <div className="flex items-center gap-4">
           <div className="relative group hidden sm:block">
             <div className="absolute inset-0 bg-white/5 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700" />
@@ -51,9 +50,7 @@ export default function CardsHeader({
           </div>
         </div>
 
-        {/* Lado Direito: Ações rápidas */}
         <div className="flex items-center gap-2">
-          {/* Status Counter Slim */}
           <div className="hidden lg:flex items-center px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] mr-2">
             <span className="text-[9px] font-black text-white/40 tracking-widest uppercase">
               {filteredCount} / {cardsList.length}
@@ -70,7 +67,6 @@ export default function CardsHeader({
         </div>
       </div>
 
-      {/* Barra de Ferramentas: Pesquisa e Filtro Integrados */}
       <div className="flex items-center gap-3 h-10">
         <div className="relative flex-1 h-full group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-white/40 transition-colors" size={14} />
@@ -83,7 +79,6 @@ export default function CardsHeader({
           />
         </div>
 
-        {/* Dropdown de Ordenação Estilizado */}
         <div className="relative h-full">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none">
             <SlidersHorizontal size={12} />
