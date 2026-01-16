@@ -72,8 +72,8 @@ export function Input({
   }
 
   const variantClasses = {
-    default: "bg-gray-800/50 border-gray-600 focus:bg-gray-700/30",
-    filled: "bg-gray-700/50 border-gray-500 focus:bg-gray-600/30",
+    default: "bg-gray-800/10 border-gray-600 focus:bg-gray-700/30",
+    filled: "bg-gray-700/10 border-gray-500 focus:bg-gray-600/30",
     outlined: "bg-transparent border-gray-500 focus:bg-gray-800/20"
   }
 
@@ -94,7 +94,6 @@ export function Input({
     : "text-gray-400"
 
   const inputType = showPasswordToggle && showPassword ? "text" : type
-    // Transforma centavos -> moeda
     function formatCentsToCurrency(value: number) {
       return (value / 100).toLocaleString("pt-BR", {
         style: "currency",
@@ -102,7 +101,6 @@ export function Input({
       })
     }
 
-    // Transforma string digitada -> centavos
   function parseCurrencyToCents(value: string) {
     const numeric = value.replace(/\D/g, "")
     return Number(numeric || "0")
@@ -157,7 +155,6 @@ export function Input({
           `}
         />
 
-        {/* Botão para mostrar/ocultar senha */}
         {showPasswordToggle && type === "password" && (
           <button
             type="button"

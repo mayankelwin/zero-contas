@@ -34,7 +34,6 @@ export default function AddTransactionModal({
   const { cardsList, selectedCard, installments, setInstallments, setSelectedCard } = useCreateCard()
   const [showDetails, setShowDetails] = useState(false)
 
-  // Filtra as opções da sidebar lateral caso existam tipos permitidos específicos
   const filteredDisplayConfig = useMemo(() => {
     if (!allowedTypes || allowedTypes.length === 0) return typeDisplayConfig;
     return typeDisplayConfig.filter(t => allowedTypes.includes(t.key as TransactionType));
@@ -49,7 +48,6 @@ export default function AddTransactionModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-500" onClick={onClose} />
 
       <div className={clsx(
@@ -57,7 +55,6 @@ export default function AddTransactionModal({
         showDetails ? "max-w-6xl gap-6" : "max-w-3xl"
       )}>
         
-        {/* Sidebar de Seleção de Tipo (Filtrada) */}
         <div className="hidden sm:flex flex-col gap-3 p-2 bg-white/[0.02] border border-white/[0.05] rounded-3xl backdrop-blur-md self-center z-10 shadow-2xl">
           {filteredDisplayConfig.map((t) => (
             <button
@@ -124,10 +121,14 @@ export default function AddTransactionModal({
               </div>
 
               <div className="flex items-center justify-between pt-8 border-t border-white/[0.05]">
-                <div className="flex items-center gap-4 text-white/30">
-                  <Sparkles size={16} className="animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Protocolo Seguro</span>
-                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group relative flex items-center gap-3 bg-gray-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:pr-14 active:scale-95 disabled:opacity-20"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : "Cancelar"}
+                  <Plus className="absolute right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" size={18} strokeWidth={3} />
+                </button>
                 
                 <button
                   type="submit"

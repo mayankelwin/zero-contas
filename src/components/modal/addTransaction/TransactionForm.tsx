@@ -93,7 +93,6 @@ export default function TransactionForm({
         )}
       </div>
 
-      {/* Valor em Destaque */}
       <div className="space-y-3">
         <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
           {cfg.label2}
@@ -107,7 +106,6 @@ export default function TransactionForm({
             required
           />
           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-white/40 transition-colors">
-            <Sparkles size={24} />
           </div>
         </div>
       </div>

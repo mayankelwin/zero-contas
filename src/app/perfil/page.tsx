@@ -7,15 +7,17 @@ import { useHomeLogic } from "../home/useHomeLogic"
 import { useInfosGeral } from "@/src/hooks/transactions/useInfosGeral"
 import { formatCurrency } from "@/src/utils/formatCurrency"
 
-import Header from "@/src/components/layout/Header"
 import Sidebar from "@/src/components/layout/Sidebar"
 import { LoadingPage } from "@/src/components/ui/Loading"
 import ProfileModal, { useProfileModal } from "@/src/components/modal/CustomerModal"
 
 import { 
-  User, Mail, MapPin, Calendar, 
-  Settings, ShieldCheck, Zap, 
-  ArrowUpRight, Fingerprint, Globe, 
+  User,
+  Settings, 
+  ShieldCheck, 
+  ArrowUpRight, 
+  Fingerprint, 
+  Globe, 
   Wallet
 } from "lucide-react"
 

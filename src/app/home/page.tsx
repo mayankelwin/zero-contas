@@ -38,7 +38,7 @@ export default function HomePage() {
         <Header />
 
         <div className="p-6 space-y-6">
-          <div className="justify-between align-center flex w-1f">
+          {/* <div className="justify-between align-center flex w-1f">
           <h2 className="text-2xl font-semibold text-white">Bem vindo, {user.displayName}!</h2>
             <button
               onClick={handleDeleteAllData}
@@ -46,7 +46,7 @@ export default function HomePage() {
             >
               Apagar Todos os Dados (Teste)
             </button>
-          </div>
+          </div> */}
 
           <DashboardSummary reloadFlag={reloadFlag} />
           <ChartCard 

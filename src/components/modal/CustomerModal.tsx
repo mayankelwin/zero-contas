@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import {
-  X, User, Mail, Briefcase, Lock, Camera, 
+  X, User, Briefcase, Lock, Camera, 
   ArrowLeft, ShieldCheck, Wallet, Save, Edit3
 } from "lucide-react"
 import { Input } from "../ui/Input"
@@ -48,29 +48,46 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
     confirmPassword: ""
   })
 
-  useEffect(() => {
-    if (!isOpen || !uid) return
-
-    const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
+    if (!uid) return
+    setLoading(true)
+    try {
       const docRef = doc(db, "users", uid)
       const docSnap = await getDoc(docRef)
+      
       if (docSnap.exists()) {
         const data = docSnap.data()
+        
+        const fullName = data.name || ""
+        const nameParts = fullName.split(" ")
+        const fName = nameParts[0] || ""
+        const lName = nameParts.slice(1).join(" ") || ""
+
         setFormData({
-          firstName: data.firstName || "",
-          lastName: data.lastName || "",
+          firstName: fName,
+          lastName: lName,
           email: data.email || "",
-          role: data.role || "",
-          salary: Number(data.salary) || 0,
+          role: data.role || "free",
+          salary: data.salaryConfig?.amount || 0,
           jobTitle: data.jobTitle || "",
           newPassword: "",
           confirmPassword: ""
         })
+        
         if (data.profileImage) setProfileImage(data.profileImage)
       }
+    } catch (error) {
+      console.error("Erro ao buscar dados do Firebase:", error)
+    } finally {
+      setLoading(false)
     }
-    fetchUser()
-  }, [isOpen, uid])
+  }, [uid])
+
+  useEffect(() => {
+    if (isOpen && uid) {
+      fetchUser()
+    }
+  }, [isOpen, uid, fetchUser])
 
   if (!isOpen) return null
 
@@ -88,10 +105,9 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
       }
 
       const dataToUpdate = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
         role: formData.role,
-        salary: formData.salary,
+        "salaryConfig.amount": Number(formData.salary),
         jobTitle: formData.jobTitle,
         profileImage: imageUrl
       }
@@ -101,7 +117,7 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
       setUploadedFile(null)
       alert("Terminal de Identidade Atualizado.")
     } catch (error) {
-      console.error(error)
+      console.error("Erro ao salvar:", error)
       alert("Erro ao sincronizar dados.")
     } finally {
       setLoading(false)
@@ -146,7 +162,7 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
 
               <div>
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-3">
-                  <ShieldCheck size={12} /> System Admin
+                  <ShieldCheck size={12} /> {formData.role || "User"} Account
                 </span>
                 <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-none">
                   Core <span className="text-white/20 tracking-normal not-italic font-medium">Settings</span>
@@ -161,7 +177,6 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
         </div>
 
         <div className="p-10 space-y-10 overflow-y-auto max-h-[55vh] custom-scrollbar">
-          
           <div className="grid grid-cols-2 gap-10">
             <div className="space-y-4">
               <Label title="Nome de Registro" />
@@ -169,7 +184,7 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
                 <Input
                   value={formData.firstName}
                   onChange={(val) => setFormData({ ...formData, firstName: val })}
-                  placeholder="Ex: John"
+                  placeholder="Nome"
                 />
               ) : (
                 <p className="text-xl font-black tracking-tight">{formData.firstName || "---"}</p>
@@ -182,7 +197,7 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
                 <Input
                   value={formData.lastName}
                   onChange={(val) => setFormData({ ...formData, lastName: val })}
-                  placeholder="Ex: Doe"
+                  placeholder="Sobrenome"
                 />
               ) : (
                 <p className="text-xl font-black tracking-tight">{formData.lastName || "---"}</p>
@@ -265,6 +280,7 @@ export default function ProfileModal({ isOpen = false, onClose = () => {}, uid }
           )}
         </div>
 
+        {/* Footer do Modal */}
         <div className="p-10 bg-white/[0.02] border-t border-white/[0.05] flex justify-end items-center gap-6">
           {isEditing ? (
             <>

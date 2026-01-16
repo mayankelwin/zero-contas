@@ -37,7 +37,7 @@ export default function DashboardSummary({ reloadFlag }: { reloadFlag?: number }
   const { user } = useAuth()
   
   return (
-    <div className="space-y-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+    <div className=" animate-in fade-in slide-in-from-bottom-8 duration-1000">
       <ToastContainer 
         toastClassName={() => "bg-[#161618] text-white font-black uppercase text-[10px] tracking-widest p-4 rounded-2xl shadow-2xl"}
         position="top-right" 
