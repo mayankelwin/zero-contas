@@ -51,6 +51,33 @@
   scrollbar-color: #757575 transparent;
 }
 
+/* Ajuste para o DatePicker combinar com o tema escuro */
+.react-datepicker {
+  background-color: #0f0f11 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1.5rem !important;
+  font-family: inherit !important;
+  color: white !important;
+}
+
+.react-datepicker__header {
+  background-color: #161618 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.react-datepicker__current-month, .react-datepicker__day-name, .react-datepicker__day {
+  color: white !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: white !important;
+  color: black !important;
+}
+
 
 body {
   background: var(--background);

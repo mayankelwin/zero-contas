@@ -1,12 +1,10 @@
 "use client"
 
+import { useEffect } from "react"
 import { Input } from "../../ui/Input"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
-import { Calendar, CreditCard, ChevronDown, Sparkles } from "lucide-react"
+import { CreditCard, ChevronDown, Sparkles, Target, Wallet, Calendar } from "lucide-react"
 import { clsx } from "clsx"
 
-// Importe o tipo diretamente do seu hook para evitar conflito
 import { TransactionType } from "../../../hooks/transactions/useAddTransaction"
 
 interface TransactionFormProps {
@@ -45,57 +43,97 @@ export default function TransactionForm({
   setSubscriptionType,
 }: TransactionFormProps) {
   
-  // Estilo padrão para os selects customizados
-  const selectStyles = "w-full px-5 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all appearance-none cursor-pointer text-sm"
+  const baseInputStyles = "w-full px-5 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all appearance-none cursor-pointer text-sm"
+
+  const goalCategories = [
+    { id: "g1", name: "Adquirir uma casa" },
+    { id: "g2", name: "Comprar um carro" },
+    { id: "g3", name: "Quitar uma dívida" },
+    { id: "g4", name: "Reserva de Emergência" },
+    { id: "g5", name: "Viagem / Férias" },
+    { id: "g6", name: "Aposentadoria" },
+    { id: "g7", name: "Educação / Curso" },
+    { id: "g8", name: "Outros" },
+  ]
+
+  useEffect(() => {
+    if (!formData[cfg.dateKey]) {
+      const today = new Date().toISOString().split('T')[0]
+      handleChange(cfg.dateKey, today)
+    }
+  }, [cfg.dateKey, formData, handleChange])
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
       
-      {/* Seção Principal: Nome e Categoria */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {cfg && (
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
-              {cfg.label1}
-            </label>
-            <Input
-              type="text"
-              value={formData[cfg.titleKey] || ""}
-              placeholder={`Ex: Assinatura Netflix`}
-              onChange={(v) => handleChange(cfg.titleKey, v)}
-              required
-            />
-          </div>
-        )}
-
-        {cfg.selectLabel && (
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
-              {cfg.selectLabel}
-            </label>
-            <div className="relative">
-              <select
-                value={formData[cfg.categoryKey || cfg.key1]}
-                onChange={(e) => handleChange(cfg.categoryKey || cfg.key1, e.target.value)}
-                required
-                className={selectStyles}
-              >
-                <option value="" className="bg-[#09090b] text-gray-500">{cfg.placeholder}</option>
-                {cfg.selectOptions?.map((option: any) => (
-                  <option key={option.id} value={option.name} className="bg-[#09090b]">
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+        {type === "goal" ? (
+          <>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Objetivo Principal</label>
+              <div className="relative">
+                <select
+                  onChange={(e) => handleChange(cfg.titleKey, e.target.value)}
+                  className={baseInputStyles}
+                  defaultValue=""
+                >
+                  <option value="" disabled className="bg-[#09090b]">Selecione uma meta...</option>
+                  {goalCategories.map((cat) => (
+                    <option key={cat.id} value={cat.name} className="bg-[#09090b]">{cat.name}</option>
+                  ))}
+                </select>
+                <Target size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+              </div>
             </div>
-          </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Nome Personalizado</label>
+              <Input
+                type="text"
+                value={formData[cfg.titleKey] || ""}
+                placeholder={`Ex: Minha Casa Própria`}
+                onChange={(v) => handleChange(cfg.titleKey, v)}
+                required
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">{cfg?.label1}</label>
+              <Input
+                type="text"
+                value={formData[cfg?.titleKey] || ""}
+                placeholder={`Ex: Assinatura Netflix`}
+                onChange={(v) => handleChange(cfg.titleKey, v)}
+                required
+              />
+            </div>
+            {cfg?.selectLabel && (
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">{cfg.selectLabel}</label>
+                <div className="relative">
+                  <select
+                    value={formData[cfg.categoryKey || cfg.key1]}
+                    onChange={(e) => handleChange(cfg.categoryKey || cfg.key1, e.target.value)}
+                    required
+                    className={baseInputStyles}
+                  >
+                    <option value="" className="bg-[#09090b] text-gray-500">{cfg.placeholder}</option>
+                    {cfg.selectOptions?.map((option: any, idx: number) => (
+                      <option key={`${option.id}-${idx}`} value={option.name} className="bg-[#09090b]">{option.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       <div className="space-y-3">
         <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
-          {cfg.label2}
+          {type === "goal" ? "Valor Alvo da Meta" : cfg?.label2}
         </label>
         <div className="relative group">
           <Input
@@ -105,89 +143,77 @@ export default function TransactionForm({
             placeholder="R$ 0,00"
             required
           />
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-white/40 transition-colors">
-          </div>
+          <Wallet size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none" />
         </div>
       </div>
 
-      {/* Cartão e Parcelas (UX melhorada) */}
       {(type === "expense" || type === "fixedExpense") && (
-        <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/[0.05] space-y-6">
-          {type === "fixedExpense" && (
-            <div className="flex items-center gap-3 pb-2">
-              <input
-                id="linkCard"
-                type="checkbox"
-                checked={!!selectedCard}
+        <div className="space-y-3">
+          <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
+            Forma de Pagamento
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <select
+                value={selectedCard?.uniqueId || ""}
                 onChange={(e) => {
-                  if (e.target.checked) setSelectedCard(cardsWithUniqueIds[0] || null)
-                  else setSelectedCard(null)
+                  const val = e.target.value;
+                  const found = cardsWithUniqueIds.find((c) => c.uniqueId === val);
+                  if (found) {
+                    setSelectedCard(found);
+                  } else {
+                    setSelectedCard(null);
+                    setInstallments(1); 
+                  }
                 }}
-                className="w-5 h-5 accent-white bg-transparent border-white/20 rounded-lg cursor-pointer"
-              />
-              <label htmlFor="linkCard" className="text-xs font-bold text-white/60 cursor-pointer select-none">
-                Vincular cartão de crédito
-              </label>
+                className={baseInputStyles}
+              >
+                <option value="" className="bg-[#09090b]">Saldo em conta (Débito)</option>
+                {cardsWithUniqueIds.map((card, idx) => (
+                  <option key={`${card.uniqueId}-${idx}`} value={card.uniqueId} className="bg-[#09090b]">
+                    {card.cardName} (**** {card.cardNumber?.slice(-4)})
+                  </option>
+                ))}
+              </select>
+              <CreditCard size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
             </div>
-          )}
 
-          {(type === "expense" || selectedCard) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative">
-                <select
-                  value={selectedCard?.uniqueId || ""}
-                  onChange={(e) => {
-                    const selected = cardsWithUniqueIds.find((c) => c.uniqueId === e.target.value)
-                    setSelectedCard(selected || null)
-                  }}
-                  className={selectStyles}
-                >
-                  <option value="" className="bg-[#09090b]">Selecione o cartão</option>
-                  {cardsWithUniqueIds.map((card) => (
-                    <option key={card.uniqueId} value={card.uniqueId} className="bg-[#09090b]">
-                      {card.cardName} (**** {card.cardNumber.slice(-4)})
-                    </option>
-                  ))}
-                </select>
-                <CreditCard size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
-              </div>
-
-              {selectedCard && (
-                <div className="relative">
-                   <select 
-                    value={installments} 
-                    onChange={(e) => setInstallments(Number(e.target.value))}
-                    className={selectStyles}
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                      <option key={`inst-${num}`} value={num} className="bg-[#09090b]">
-                        {num === 1 ? 'À vista' : `${num} parcelas`}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
-                </div>
-              )}
+            <div className="relative">
+               <select 
+                value={installments} 
+                onChange={(e) => setInstallments(Number(e.target.value))}
+                className={clsx(
+                  baseInputStyles, 
+                  !selectedCard && "opacity-40 cursor-not-allowed grayscale"
+                )}
+                disabled={!selectedCard}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                  <option key={`inst-${num}`} value={num} className="bg-[#09090b]">
+                    {num === 1 ? 'Pagamento À Vista' : `${num}x Parcelado`}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Datas e Recorrência */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-3">
           <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
-            {type === "goal" ? "Data Limite" : "Data do Lançamento"}
+            {type === "goal" ? "Prazo Final" : "Data do Lançamento"}
           </label>
-          <div className="relative">
-            <DatePicker
-              selected={formData[cfg.dateKey]}
-              onChange={(date) => handleChange(cfg.dateKey, date)}
-              dateFormat="dd/MM/yyyy"
-              className={clsx(selectStyles, "w-full")}
+          <div className="relative group">
+            <input
+              type="date"
+              value={formData[cfg?.dateKey] ? (formData[cfg.dateKey] instanceof Date ? formData[cfg.dateKey].toISOString().split('T')[0] : formData[cfg.dateKey]) : ""}
+              onChange={(e) => handleChange(cfg.dateKey, e.target.value)}
+              className={clsx(baseInputStyles, "block [color-scheme:dark]")}
               required
             />
-            <Calendar size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+            <Calendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
           </div>
         </div>
 
@@ -198,17 +224,22 @@ export default function TransactionForm({
               <select
                 value={subscriptionType}
                 onChange={(e) => setSubscriptionType(e.target.value)}
-                className={selectStyles}
+                className={baseInputStyles}
               >
                 <option value="mensal" className="bg-[#09090b]">Mensal</option>
                 <option value="bimestral" className="bg-[#09090b]">Bimestral</option>
                 <option value="trimestral" className="bg-[#09090b]">Trimestral</option>
                 <option value="anual" className="bg-[#09090b]">Anual</option>
               </select>
-              <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+              <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
             </div>
           </div>
         )}
+      </div>
+
+      <div className="flex items-center gap-2 px-2 py-1 text-[9px] font-bold text-white/20 uppercase tracking-widest">
+        <Sparkles size={10} />
+        Preencha todos os campos obrigatórios
       </div>
     </div>
   )

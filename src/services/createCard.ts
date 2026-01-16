@@ -32,9 +32,19 @@ export function useCreateCard() {
   })
 
     useEffect(() => {
-        if (selectedCard) {
-        setFormData(prev => ({ ...prev, card: selectedCard.cardNumber, installments }))
-        }
+      if (selectedCard) {
+        setFormData(prev => ({ 
+          ...prev, 
+          card: selectedCard.cardName, 
+          installments: installments 
+        }))
+      } else {
+        setFormData(prev => ({ 
+          ...prev, 
+          card: "", 
+          installments: 1 
+        }))
+      }
     }, [selectedCard, installments])
 
   // Buscar cartões

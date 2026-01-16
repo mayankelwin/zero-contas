@@ -24,28 +24,28 @@ export default function AddTransactionModal({
   allowedTypes 
 }: AddTransactionModalProps) {
   
+  const { cardsList, selectedCard, installments, setInstallments, setSelectedCard } = useCreateCard()
   const {
     type, setType, loading, rawAmount, rawGoalValue, formData,
     handleChange, handleAmountChange, handleGoalValueChange,
     formatCurrencyForDisplay, handleSubmit,
     typeLabels, typeDisplayConfig, fieldConfig,
   } = useAddTransaction(defaultType)
-
-  const { cardsList, selectedCard, installments, setInstallments, setSelectedCard } = useCreateCard()
   const [showDetails, setShowDetails] = useState(false)
 
+  
   const filteredDisplayConfig = useMemo(() => {
     if (!allowedTypes || allowedTypes.length === 0) return typeDisplayConfig;
     return typeDisplayConfig.filter(t => allowedTypes.includes(t.key as TransactionType));
   }, [typeDisplayConfig, allowedTypes]);
-
+  
   useEffect(() => {
     setShowDetails(!!rawAmount || !!rawGoalValue)
   }, [rawAmount, rawGoalValue])
-
+  
   if (!isOpen) return null;
   if (type === "balance") return null;
-
+  
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-500" onClick={onClose} />
@@ -115,15 +115,15 @@ export default function AddTransactionModal({
                   cardsWithUniqueIds={cardsList}
                   installments={installments} 
                   setInstallments={setInstallments}
-                  subscriptionType="mensal" 
-                  setSubscriptionType={() => {}}
+                  subscriptionType={formData.subscriptionType || "mensal"} 
+                  setSubscriptionType={(val) => handleChange('subscriptionType', val)}
                 />
               </div>
 
               <div className="flex items-center justify-between pt-8 border-t border-white/[0.05]">
                 <button
-                  type="submit"
                   disabled={loading}
+                  onClick={onClose} 
                   className="group relative flex items-center gap-3 bg-gray-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:pr-14 active:scale-95 disabled:opacity-20"
                 >
                   {loading ? <Loader2 className="animate-spin" size={18} /> : "Cancelar"}
