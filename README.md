@@ -10,6 +10,10 @@
 
 ---
 
+[![Acessar ZERO CONTAS](https://img.shields.io/badge/Acessar-ZERO%20CONTAS-0f172a?style=for-the-badge&logo=vercel&logoColor=white)](https://zero-contas.vercel.app/)
+
+---
+
 ## 📑 Sumário
 
 1. [Visão Geral](#visão-geral)
