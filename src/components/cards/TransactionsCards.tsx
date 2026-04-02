@@ -1,6 +1,4 @@
-"use client"
-
-import { useEffect, useState, JSX } from "react"
+import React, { useEffect, useState, JSX, memo } from "react"
 import {
   Query,
   FirestoreError,
@@ -12,39 +10,54 @@ import { useAuth } from "../../hooks/useAuth"
 import { db } from "../../lib/firebase"
 import { formatCurrency } from "../../utils/formatCurrency"
 import { CardItem } from "../../types/transactions"
-import { Calendar, Loader2 } from "lucide-react"
+import { Calendar, Loader2, Search, ArrowUpRight } from "lucide-react"
+import { cn } from "@/src/lib/utils"
 
 interface GenericCardProps {
   title: string
   firebaseQuery?: Query
+  items?: CardItem[]
   getIcon: (item: CardItem) => JSX.Element
   formatValue?: (item: CardItem) => string
   cardType?: "transaction" | "subscription" | "goal"
   reloadFlag?: number
+  loading?: boolean
 }
 
-export default function CardGlobal({
+const CardGlobal = memo(function CardGlobal({
   title,
   firebaseQuery,
+  items: itemsProp,
   getIcon,
   formatValue,
   cardType = "transaction",
   reloadFlag = 0,
+  loading: loadingProp,
 }: GenericCardProps) {
-  const [items, setItems] = useState<CardItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [internalItems, setInternalItems] = useState<CardItem[]>([])
+  const [internalLoading, setInternalLoading] = useState(true)
   const [error, setError] = useState<FirestoreError | null>(null)
   const { user } = useAuth()
 
+  const items = itemsProp ?? internalItems
+  const loading = itemsProp ? (loadingProp ?? false) : internalLoading
+
   useEffect(() => {
-    if (!user?.uid) return
-    setLoading(true)
+    if (itemsProp || !user?.uid) {
+      if (!itemsProp) setInternalLoading(false)
+      return
+    }
+
+    setInternalLoading(true)
 
     const activeQuery = cardType === "goal"
       ? query(collection(db, "users", user.uid, "goals"))
       : firebaseQuery
 
-    if (!activeQuery) return
+    if (!activeQuery) {
+      setInternalLoading(false)
+      return
+    }
 
     const unsubscribe = onSnapshot(activeQuery, (snapshot) => {
       const data: CardItem[] = snapshot.docs.map((doc) => {
@@ -67,53 +80,64 @@ export default function CardGlobal({
         filtered = data.sort((a, b) => new Date(a.goalDeadline ?? 0).getTime() - new Date(b.goalDeadline ?? 0).getTime())
       }
 
-      setItems(filtered)
-      setLoading(false)
+      setInternalItems(filtered)
+      setInternalLoading(false)
     }, (err) => {
       setError(err as FirestoreError)
-      setLoading(false)
+      setInternalLoading(false)
     })
 
     return () => unsubscribe()
-  }, [user?.uid, firebaseQuery, reloadFlag, cardType])
+  }, [user?.uid, reloadFlag, cardType, !!itemsProp, firebaseQuery])
 
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleDateString("pt-BR", { day: '2-digit', month: 'short' }) : "-"
 
   return (
-    <div className="bg-[#161618] rounded-[2.5rem] p-6 lg:p-8 border border-white/[0.03] shadow-2xl flex flex-col h-full overflow-hidden">
+    <div className="bg-[#0f0f11]/40 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/[0.04] shadow-2xl flex flex-col h-full overflow-hidden group transition-all duration-500 hover:border-white/10">
       {/* Header Padronizado */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
-          {title}
-        </h3>
-        <div className="w-2 h-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic group-hover:text-white/40 transition-colors">
+            {title}
+          </h3>
+          <div className="h-0.5 w-6 bg-emerald-500/30 rounded-full" />
+        </div>
+        <div className="flex items-center gap-2">
+           <div className="w-8 h-8 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-white/10">
+              <Search size={12} />
+           </div>
+        </div>
       </div>
 
       {error && (
-        <div className="py-10 text-center">
-          <p className="text-red-400 text-xs font-bold">Erro ao carregar dados</p>
+        <div className="py-12 text-center bg-red-500/5 rounded-3xl border border-red-500/10">
+          <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">Erro de Sincronização</p>
         </div>
       )}
 
       {loading ? (
-        <div className="py-10 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />
-          <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest">Sincronizando</p>
+        <div className="py-20 flex flex-col items-center justify-center gap-4">
+          <div className="relative">
+             <div className="w-10 h-10 border-2 border-white/5 rounded-full" />
+             <Loader2 className="w-10 h-10 text-white/20 animate-spin absolute inset-0" />
+          </div>
+          <p className="text-white/10 text-[9px] font-black uppercase tracking-[0.4em] italic">Auditoria em Tempo Real</p>
         </div>
       ) : (
-        <div className="overflow-y-auto pr-2 custom-scrollbar max-h-[380px]">
+        <div className="overflow-y-auto pr-3 hide-scrollbar max-h-[420px]">
           {items.length === 0 ? (
-            <p className="text-gray-600 text-xs text-center py-10 font-medium italic">
-              Nenhuma atividade registrada
-            </p>
+            <div className="py-20 text-center space-y-2 opacity-20">
+               <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhum registro</p>
+               <p className="text-[8px] font-bold uppercase tracking-widest italic leading-none">Aguardando movimentações</p>
+            </div>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {items.map((item) => {
                 const isNegative = item.type === "expense" || item.type === "fixedExpense" || cardType === "subscription";
                 const isGoal = item.type === "goal";
                 
-                const displayName = isGoal ? item.goalName : (item.title ?? item.name ?? "Sem nome");
+                const displayName = isGoal ? item.goalName : (item.title ?? item.name ?? "Operação");
                 const displayValue = isGoal ? item.goalValue : (item.amount ?? item.value ?? 0);
                 const displayCategory = isGoal ? "Meta" : (item.category ?? item.subscriptionType ?? "Geral");
                 const displayDate = isGoal ? formatDate(item.goalDeadline) : formatDate(item.date ?? item.nextBilling);
@@ -121,33 +145,37 @@ export default function CardGlobal({
                 return (
                   <li
                     key={item.id}
-                    className="group flex items-center justify-between p-3 rounded-2xl bg-white/[0.01] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
+                    className="group/item flex items-center justify-between p-4 rounded-2xl bg-white/[0.01] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-500"
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-gray-400 group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex items-center gap-5 flex-1">
+                      <div className="w-11 h-11 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-white/20 group-hover/item:border-emerald-500/20 group-hover/item:text-white transition-all duration-500">
                         {getIcon(item)}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white tracking-tight leading-tight">
+                      <div className="space-y-0.5">
+                        <span className="text-sm font-black text-white italic tracking-tighter uppercase leading-none block">
                           {displayName}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tighter">
+                        <span className="text-[9px] font-black text-white/10 uppercase tracking-widest">
                           {displayCategory}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`text-sm font-black tracking-tighter ${
-                        isNegative ? "text-red-400" : isGoal ? "text-blue-400" : "text-emerald-400"
-                      }`}>
-                        {formatValue ? formatValue(item) : (
-                          `${isNegative ? "- " : !isGoal ? "+ " : ""}${formatCurrency(displayValue ?? 0)}`
-                        )}
-                      </span>
-                      <div className="flex items-center gap-1 opacity-40">
-                        <Calendar size={10} className="text-gray-400" />
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "text-base font-black tracking-tighter italic leading-none",
+                          isNegative ? "text-red-500" : isGoal ? "text-emerald-500" : "text-emerald-500"
+                        )}>
+                          {formatValue ? formatValue(item) : (
+                            `${isNegative ? "-" : "+"}${formatCurrency(displayValue ?? 0)}`
+                          )}
+                        </span>
+                        {!isGoal && <ArrowUpRight size={10} className="text-white/5 group-hover/item:text-white/20 transition-colors" />}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar size={10} className="text-white/10" />
+                        <span className="text-[9px] font-bold text-white/10 uppercase tracking-widest leading-none">
                           {displayDate}
                         </span>
                       </div>
@@ -161,4 +189,6 @@ export default function CardGlobal({
       )}
     </div>
   )
-}
+})
+
+export default CardGlobal

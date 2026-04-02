@@ -1,16 +1,13 @@
 "use client"
 
+import React, { memo } from "react"
 import { formatCurrency } from "@/src/utils/formatCurrency"
-import { TrendingUp, TrendingDown, Minus } from "lucide-react"
-import { ElementType } from "react"
+import { cn } from "@/src/lib/utils"
 
 export interface SummaryCardData {
   label: string
   value: number
-  icon: ElementType
-  color?: string 
-  valueColor?: string
-  subtitle?: string
+  icon: any
   change?: string
   changeType?: 'positive' | 'negative' | 'neutral' | string 
 }
@@ -19,50 +16,47 @@ interface SummaryCardsProps {
   cards: SummaryCardData[]
 }
 
-export default function SummaryCards({ cards }: SummaryCardsProps) {
+const SummaryCards = memo(function SummaryCards({ cards }: SummaryCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="group relative bg-[#161618] hover:bg-[#111111] p-5 transition-all duration-500 overflow-hidden rounded-2xl"
+          className="group flex flex-col gap-4 relative transition-all duration-500"
         >
-          {/* Indicador lateral sutil no hover */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-0 group-hover:h-1/2 bg-white transition-all duration-500" />
-
-          <div className="relative z-10 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-white/20 group-hover:text-white transition-colors duration-500">
-                  <card.icon size={16} strokeWidth={2} />
-                </div>
-                <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.25em] group-hover:text-white/60 transition-colors">
-                  {card.label}
-                </h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-white group-hover:border-white/10 transition-all duration-500">
+                <card.icon size={14} strokeWidth={2.5} />
               </div>
-              
-              {card.change && (
-                <div className={`text-[9px] font-black italic tracking-tighter ${
-                  card.changeType === 'positive' ? 'text-emerald-500' : 
-                  card.changeType === 'negative' ? 'text-red-500' : 'text-white/20'
-                }`}>
-                  {card.changeType === 'positive' && "+"}
-                  {card.change}
-                </div>
-              )}
+              <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] group-hover:text-white/40 transition-colors">
+                {card.label}
+              </h3>
             </div>
+            
+            {card.change && (
+              <div className={cn(
+                "text-[8px] font-black tracking-[0.2em] uppercase px-2 py-0.5 rounded-full border",
+                card.changeType === 'positive' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' : 
+                card.changeType === 'negative' ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
+                'text-white/20 border-white/5 bg-white/5'
+              )}>
+                {card.changeType === 'positive' && "+"}
+                {card.change}
+              </div>
+            )}
+          </div>
 
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-2xl font-black text-white tracking-tighter uppercase">
-                {formatCurrency(card.value ?? 0)}
-              </h2>
-              <span className="text-[8px] font-bold text-white/10 uppercase tracking-widest hidden xl:block">
-                Total Net
-              </span>
-            </div>
+          <div className="space-y-1">
+            <h2 className="text-3xl font-black text-white tracking-tighter italic overflow-hidden text-ellipsis whitespace-nowrap">
+              {formatCurrency(card.value ?? 0)}
+            </h2>
+            <div className="h-px w-full bg-gradient-to-r from-white/[0.05] to-transparent" />
           </div>
         </div>
       ))}
     </div>
   )
-}
+})
+
+export default SummaryCards

@@ -20,9 +20,9 @@ export default function HomePage() {
     loading,
     isModalOpen,
     transactionType,
-    reloadFlag,
-    categoryChartData,
     spendingData,
+    recentTransactions,
+    subscriptions,
     handleSelectType,
     handleCloseModal,
     handleDeleteAllData
@@ -48,7 +48,7 @@ export default function HomePage() {
             </button>
           </div> */}
 
-          <DashboardSummary reloadFlag={reloadFlag} />
+          <DashboardSummary />
           <ChartCard 
             title="Resumo Mensal" 
             chartType="bar" 
@@ -60,18 +60,18 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CardGlobal
-              title="Transações Recentes"
-              firebaseQuery={collection(db, "users", user.uid, "transactions")}
+              title="Atividades Recentes"
+              items={recentTransactions}
               getIcon={getTransactionIcon} 
-              reloadFlag={reloadFlag}
+              loading={loading}
             />
 
             <CardGlobal
               cardType="subscription"
               title="Despesas fixas"
-              firebaseQuery={collection(db, "users", user.uid, "subscriptions")}
+              items={subscriptions}
               getIcon={getSubscriptionIcon}
-              reloadFlag={reloadFlag}
+              loading={loading}
             />
           </div>
         </div>

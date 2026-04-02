@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { memo } from "react"
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -30,7 +30,7 @@ interface ChartCardProps {
   color?: string
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = memo(({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       // Tooltip agora com o fundo #161618 para consistência
@@ -43,9 +43,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     )
   }
   return null
-}
+})
 
-export default function ChartCard({ title, subtitle, chartType, data, dataKey, categoryKey, className, color = "#fff" }: ChartCardProps) {
+const ChartCard = memo(function ChartCard({ title, subtitle, chartType, data, dataKey, categoryKey, className, color = "#fff" }: ChartCardProps) {
   
   const isValidData = Array.isArray(data) && data.length > 0;
 
@@ -161,4 +161,6 @@ export default function ChartCard({ title, subtitle, chartType, data, dataKey, c
       </div>
     </div>
   )
-}
+})
+
+export default ChartCard

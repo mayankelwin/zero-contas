@@ -1,49 +1,76 @@
+"use client"
+
+import React, { memo } from "react"
 import { banks } from "@/src/data/banks"
+import { cn } from "@/src/lib/utils"
+import { Sparkles } from "lucide-react"
 
 interface CardItemProps {
   bank: string
   cardName: string
   brand: string
   cardNumber: string
-  index?: number
   billingDay: number
 }
 
-export default function CardItem({ bank, cardName, brand, cardNumber, index = 0, billingDay }: CardItemProps) {
-  const safeBank = bank ?? "Banco"
+const CardItem = memo(function CardItem({ bank, cardName, brand, cardNumber, billingDay }: CardItemProps) {
   const bankInfo = banks.find(b => b.name.toLowerCase() === (bank ?? "Banco").toLowerCase())
-  const color1 = bankInfo?.color ?? "#555555"
-  const color2 = `${color1}` 
-
-  const gradientStyle = { 
-    background: `linear-gradient(135deg, ${color1}, ${color2})`,
-    border: "2px solid rgba(255,255,255,0.2)", 
-    boxShadow: "0 4px 15px rgba(0,0,0,0.3)" 
-  }
+  const baseColor = bankInfo?.color ?? "#1E293B"
 
   return (
-    <div
-      className="relative rounded-2xl p-5 w-72 h-44 flex flex-col justify-between text-white overflow-hidden "
-      style={gradientStyle}
-    >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/30 rounded-full -mr-12 -mt-12"></div>
-      <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/15 rounded-full -ml-8 -mb-8"></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-white/15 rounded-full"></div>
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">{bank}</h3>
-        <span className="text-sm opacity-90">{brand}</span>
+    <div className="relative w-80 h-48 rounded-[2rem] p-8 overflow-hidden group shadow-2xl transition-all duration-700 hover:scale-[1.02]">
+      {/* Camada de Cor de Fundo */}
+      <div 
+        className="absolute inset-0 transition-colors duration-700" 
+        style={{ backgroundColor: baseColor }}
+      />
+      
+      {/* Textura de Vidro e Gradiente */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/40" />
+      <div className="absolute inset-0 opacity-10 mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+      
+      {/* Brilho de Borda Moderno */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      
+      {/* Conteúdo do Cartão */}
+      <div className="relative z-10 h-full flex flex-col justify-between text-white">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+             <div className="flex items-center gap-2">
+                <Sparkles size={10} className="text-white/40" />
+                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/40 italic">Premium Asset</span>
+             </div>
+             <h3 className="text-xl font-black italic tracking-tighter uppercase leading-none">{bank || "BANCO"}</h3>
+          </div>
+          <div className="px-3 py-1 bg-black/20 rounded-full border border-white/10 backdrop-blur-md">
+            <span className="text-[10px] font-black uppercase tracking-widest">{brand || "VISA"}</span>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+             <p className="text-[10px] font-bold text-white/60 tracking-widest uppercase">{cardName || "CREDIT CARD"}</p>
+             <p className="text-lg font-mono tracking-[0.25em] text-white leading-none">
+               •••• {cardNumber?.slice(-4) || "0000"}
+             </p>
+          </div>
+
+          <div className="flex justify-between items-center pt-2 border-t border-white/10">
+            <div className="flex flex-col">
+               <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">Billing Day</span>
+               <span className="text-[10px] font-bold text-white uppercase italic">{billingDay || 10}</span>
+            </div>
+            <div className="w-8 h-6 bg-white/10 rounded border border-white/10 flex items-center justify-center">
+               <div className="w-4 h-3 bg-white/20 rounded-sm" />
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <p className="text-sm opacity-80">{cardName}</p>
-      </div>
-      <div className="flex justify-between items-center">
-        <p className="text-sm tracking-widest font-mono">
-          •••• •••• •••• {cardNumber?.slice(-4) ?? "0000"}
-        </p>
-        <span className="text-sm opacity-90">
-          Fatura: {billingDay}
-        </span>
-      </div>
+
+      {/* Glossy Overlay */}
+      <div className="absolute -inset-full h-[200%] w-[200%] rotate-45 translate-x-[-110%] group-hover:translate-x-[110%] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-[1200ms] ease-in-out pointer-events-none" />
     </div>
   )
-}
+})
+
+export default CardItem

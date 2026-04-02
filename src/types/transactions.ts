@@ -9,6 +9,7 @@ export interface CardItem {
   value?: number;
   category?: string;
   subscriptionType?: string;
+  subscriptionName?: string;
   date?: string;
   nextBilling?: string;
   goalName?: string;

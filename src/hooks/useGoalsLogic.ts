@@ -1,9 +1,8 @@
-"use client"
-
 import { useAuth } from "@/src/context/AuthContext"
+import { useFinance } from "@/src/context/FinanceContext"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { collection, query, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore"
+import { useEffect, useMemo } from "react"
+import { doc, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
 import { toast } from "react-toastify"
 
@@ -16,56 +15,31 @@ export interface Goal {
   isPriority?: boolean
   isActive?: boolean
   isFinished?: boolean
+  updatedAt?: string
 }
 
 export function useGoalsLogic() {
-  const { user, loading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { goals, loading: financeLoading, summary } = useFinance()
   const router = useRouter()
-  const [goals, setGoals] = useState<Goal[]>([])
 
-  // Redireciona se não estiver logado
+  const loading = authLoading || financeLoading.goals
+
   useEffect(() => {
-    if (!loading && !user) router.push("/auth")
-  }, [user, loading, router])
+    if (!authLoading && !user) router.push("/auth")
+  }, [user, authLoading, router])
 
-  // Listener das metas
-  useEffect(() => {
-    if (!user) return
-    const q = query(
-      collection(db, "users", user.uid, "goals")
-      // não precisa do where("userId", "==", user.uid) porque já está no caminho do usuário
-    )
-    const unsubscribe = onSnapshot(q, snapshot => {
-      const goalsArr: Goal[] = snapshot.docs.map(docSnap => {
-        const data = docSnap.data()
-        return {
-          id: docSnap.id,
-          goalName: data.goalName,
-          goalValue: Number(data.goalValue ?? 0),
-          savedAmount: Number(data.savedAmount ?? 0),
-          goalDeadline: data.goalDeadline ?? "",
-          isPriority: data.isPriority ?? false,
-          isActive: data.isActive ?? true,
-          isFinished: data.isFinished ?? false,
-        }
-      })
-      setGoals(goalsArr)
-    })
-    return () => unsubscribe()
-  }, [user])
-
-  // Prioridade
   const togglePriority = async (goal: Goal) => {
+    if (!user) return
     try {
-      // Desmarca outras prioridades
       const updates = goals.map(g =>
         g.id !== goal.id && g.isPriority
-          ? updateDoc(doc(db, "users", user!.uid, "goals", g.id), { isPriority: false })
+          ? updateDoc(doc(db, "users", user.uid, "goals", g.id), { isPriority: false })
           : null
       ).filter(Boolean)
       await Promise.all(updates)
 
-      await updateDoc(doc(db, "users", user!.uid, "goals", goal.id), {
+      await updateDoc(doc(db, "users", user.uid, "goals", goal.id), {
         isPriority: !goal.isPriority,
       })
 
@@ -80,10 +54,10 @@ export function useGoalsLogic() {
     }
   }
 
-  // Ativar / Desativar
   const toggleActive = async (goal: Goal) => {
+    if (!user) return
     try {
-      await updateDoc(doc(db, "users", user!.uid, "goals", goal.id), {
+      await updateDoc(doc(db, "users", user.uid, "goals", goal.id), {
         isActive: !goal.isActive,
       })
       toast.success(
@@ -95,10 +69,10 @@ export function useGoalsLogic() {
     }
   }
 
-  // Finalizar meta
   const finishGoal = async (goal: Goal) => {
+    if (!user) return
     try {
-      await updateDoc(doc(db, "users", user!.uid, "goals", goal.id), {
+      await updateDoc(doc(db, "users", user.uid, "goals", goal.id), {
         isFinished: true,
         isActive: false
       })
@@ -109,11 +83,11 @@ export function useGoalsLogic() {
     }
   }
 
-  // Deletar meta
   const deleteGoal = async (goal: Goal) => {
+    if (!user) return
     if (!confirm(`Deseja realmente apagar a meta "${goal.goalName}"?`)) return
     try {
-      await deleteDoc(doc(db, "users", user!.uid, "goals", goal.id))
+      await deleteDoc(doc(db, "users", user.uid, "goals", goal.id))
       toast.success("Meta removida com sucesso!")
     } catch (err) {
       console.error(err)
@@ -122,22 +96,35 @@ export function useGoalsLogic() {
   }
 
   const updateGoal = async (goalId: string, data: Partial<Goal>) => {
-  if (!user) return;
+    if (!user) return;
     try {
       const goalRef = doc(db, "users", user.uid, "goals", goalId);
-      
-      const updateData: any = { ...data };
-
+      const updateData: any = { ...data, updatedAt: new Date().toISOString() };
       if (data.goalValue) updateData.goalValue = Number(data.goalValue);
-      
       await updateDoc(goalRef, updateData);
-      
       toast.success("Objetivo atualizado!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao atualizar os dados.");
     }
   };
+
+  const goalsStats = useMemo(() => {
+    const totalTarget = goals.reduce((acc, g) => acc + (g.goalValue || 0), 0)
+    const totalSaved = goals.reduce((acc, g) => acc + (g.savedAmount || 0), 0)
+    const globalProgress = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0
+    const activeGoals = goals.filter(g => !g.isFinished).length
+    const completedGoals = goals.filter(g => g.isFinished).length
+
+    return {
+      totalTarget,
+      totalSaved,
+      globalProgress,
+      activeGoals,
+      completedGoals,
+      userIncomes: summary.income
+    }
+  }, [goals, summary.income])
 
   return {
     user,
@@ -149,5 +136,6 @@ export function useGoalsLogic() {
     deleteGoal,
     router,
     updateGoal,
+    goalsStats
   }
 }

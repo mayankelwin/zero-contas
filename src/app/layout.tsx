@@ -1,5 +1,6 @@
 import './globals.css'
 import { AuthProvider } from '../context/AuthContext'
+import { FinanceProvider } from '../context/FinanceContext'
 import { Montserrat } from "next/font/google"
 import { ToastContainer } from 'react-toastify'
 
@@ -19,18 +20,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html className={`${montserrat.variable}`}>
       <body className="relative">
         <div className="">
-          <AuthProvider>{children}
-            <ToastContainer 
-              position="top-right" 
-              autoClose={3000} 
-              hideProgressBar={false} 
-              newestOnTop 
-              closeOnClick 
-              rtl={false} 
-              pauseOnFocusLoss 
-              draggable 
-              pauseOnHover
-            />
+          <AuthProvider>
+            <FinanceProvider>
+              {children}
+              <ToastContainer 
+                position="top-right" 
+                autoClose={3000} 
+                hideProgressBar={false} 
+                newestOnTop 
+                closeOnClick 
+                rtl={false} 
+                pauseOnFocusLoss 
+                draggable 
+                pauseOnHover
+              />
+            </FinanceProvider>
           </AuthProvider>
         </div>
       </body>
